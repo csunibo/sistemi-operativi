@@ -1,0 +1,414 @@
+Si dice che due o più processi sono in deadlock quando ognuno di essi
+attende che venga eseguita una certa azione da un altro processo.
+
+Diciamo che un processo è in stato di starvation quando esso è pronto
+per l'esecuzione ma è impossibilitato perpetuamente ad accedere alla risorsa 
+di cui ha bisogno per l’esecuzione.
+
+TEST&SET
+
+shared busy = 0; //global
+Pi: processi = 1...N
+local localcopy //local
+while (true)
+{
+	/* mutex in */
+	do
+	{
+		TS(localcopy, busy);
+	} 
+	while (localcopy == 1)
+	
+	/* critical code */
+
+	/* mutex out */
+	busy = 0
+}
+
+busy è una variabile condivisa tra tutti i processi. 
+Se busy = 0 allora la sezione critica è libera, altrimenti è occupata. 
+TS(localcopy, busy) salva una copia locale di busy e poi imposta quest’ultima ad uno. 
+Grazie alla Test and Set il primo processo che arriva salverà localmente il valore di busy 
+che inizialmente è 0, dopodiche’ farà busy = 1 ed eseguirà il codice critico. 
+Tutti gli altri processi troveranno la sezione critica occupata e rimarrano ad aspettare.
+
+SEMAFORI
+Vale la seguente invariante:
+	np <= nv + init
+	nv + init - np >= 0
+Ovvero il valore del semaforo non deve essere mai negativo.
+
+Due casi possibili:
+Eventi: semaforo inizializzato a 0, se ha valore 0 l'evento non si è verificato.
+		In questo caso il numero di eventi terminati deve essere minore o uguale 
+		al numero di volte in cui si è verificato l'evento, quindi np <= nv.
+
+Risorse: semaforo inizializzato a N > 0 che rappresenta le risorse disponibili.
+		 I processi che vogliono usare una risorsa fanno una P, decrementando il valore.
+		 I processi che restituiscono una risorsa fanno una V, aumentando il valore.
+		 Se un processo tenta di chiedere una risorsa quando non ce ne sono (value = 0) viene messo in attesa.
+		 In questo caso il numero di richieste soddisfatte non deve essere maggiore
+		 del numero di risorse iniziali + le risorse restituite (np <= nv + init).
+
+CS CON SEMAFORI
+
+Semaphore s = new Semaphore(1);
+process P 
+{
+	while (true)
+	{
+		s.P();
+		critical section
+		s.V();
+		non-critical section
+	}
+}
+
+con le seguenti implementazioni di P() e V():
+
+void P() 
+{
+[enter CS]
+	value--;
+	if (value < 0) 
+	{
+		pid = <id del processo che ha invocato P>;
+		queue.add(pid);
+		suspend(pid);
+	}
+[exit CS]
+}
+
+void V() 
+{
+[enter CS]
+	value++;
+	if (value <= 0)
+	{
+		pid = queue.remove();
+		wakeup(pid);
+	}
+[exit CS]
+}
+
+Occorre notare che, mentre la definizione classica di semaforo ad attesa attiva è tale che il
+valore del semaforo non sia mai negativo, quest’ultima implementazione può condurre a valori negativi.
+Se il valore del semaforo è negativo, la sua dimensione è data dal numero dei processi che attendono su quel semaforo.
+
+Produttore - consumatore:
+Semaphore empty = new Semaphore(1);
+Semaphore full = new Semaphore(0);
+Il produttore fa una P su empty, inserisce il suo prodotto nel buffer e fa una V su full.
+Il consumatore fa una P su full, legge il prodotto dal buffer e fa una V su empty.
+Quindi il produttore produce solo se c'è posto e il consumatore consuma solo se c'è qualcosa da consumare.
+
+Buffer limitato:
+Semaphore empty = new Semaphore(SIZE);
+Semaphore full = new Semaphore(0);
+Si utilizza inoltre un buffer circolare con le variabili front e rear.
+Il produttore fa una P su empty, inserisce il suo prodotto nel buffer, cambia il front a (front+1)%SIZE e fa una V su full.
+Il consumatore fa una P su full, legge il prodotto dal buffer, cambia il rear a (rear+1)%SIZE e fa una V su empty.
+In caso di più processi front e rear sarebbero condivise, quindi servirebbe un semaforo mutex per proteggerne l'accesso.
+
+L'init dei semafori deve essere grande quanto il numero di risorse da gestire 
+e ovunque vi siano variabili condivise, il loro accesso deve avvenire in una sezione critica.
+
+LETTORI - SCRITTORI:
+Possono accedere al buffer molteplici lettori oppure uno scrittore.
+L'invariante è la seguente: (nr > 0 && nw==0) || (nr==0 && nw <= 1)
+
+Semaphore rw = new Semaphore(1);
+Process Scrittore 
+{
+while (true)
+	{
+		...
+		rw.P(); //Si garantisce l'accesso grazie a rw
+			<modifica i dati>
+		rw.V();
+		...
+	}
+}
+
+int num_lettori = 0; //Introduco questo contatore
+Semaphore mutex = new Semaphore(1);
+Process Lettore 
+{
+	while (true) 
+	{
+		mutex.P(); //mutex
+			num_lettori++;
+			if (numlettori == 1)
+			{
+				rw.P(); //Se c'è un lettore non possono entrare scrittori
+			}
+		mutex.V();
+		
+		<legge i dati>
+		
+		mutex.P();	//mutex
+			num_lettori--;
+			if (numlettori == 0)
+			{
+				rw.V();//Se i lettori sono usciti tutti può entrare uno scrittore
+			}
+		mutex.V();
+	}
+}
+
+SEMAFORI BINARI SPLIT
+semafori binari in cui la somma dei loro valori è sempre 0 o 1. 
+Più precisamente, presi N semafori binari b[i], deve valere la seguente invariante:
+	SPLIT: 0 < b[l]+...+b[N]<1
+
+PASSAGGIO DEL TESTIMONE:
+La tecnica del passaggio del testimone utilizza i semafori binari split per decidere quale dei processi bloccati deve procedere.
+La soluzione conterrà azioni atomiche in due forme:
+	F1: <Si> oppure F2: <await Bj -> Sj>
+
+Sia Mutex un semaforo binario inizializzato ad 1.
+Associamo un semaforo Sem_j e un contatore d_j ad ogni condizione B_j, tutti inizializzati a 0.
+Il semaforo Sem_j, è usato per ritardare i processi che aspettano la condizione B_j,
+mentre il contatore d_j conta il numero di processi bloccati sul semaforo Sem_j.
+
+Gli statement F1 sono in questa forma:
+	<S>:
+	Mutex.P();
+	S;
+	SIGNAL();
+	
+Mentre quelli F2 in questa:
+	<await Bi —> Si>:
+	Mutex.P();
+	if (!Bi) 
+	{
+		d_i++;
+		Mutex.V();
+		Sem_i.P();
+	}
+	Si;
+	SIGNAL();
+
+SIGNAL() è una funzione non deterministica che cede la CS (testimone) ad un processo in attesa, se ce ne sono,
+altrimenti il controllo passa al primo processo in attesa su Mutex.
+
+R/W DEFINITIVO
+
+process Reader 
+{
+	while (true) 
+	{
+		mutex.P();
+		if (nw > 0 || waitingw > 0)
+		{ 
+			waitingr++;
+			mutex.V();
+			semr.P(); 
+		}
+		nr++;
+		if (waitingr > 0)
+		{ 
+			waitingr--; 
+			semr.V(); 
+		}
+		else
+		{ 
+			mutex.V(); 
+		}
+		wlast = false;
+		//read the database//
+		mutex.P();
+		nr--;
+		if (nr == 0 && waitingw > 0)
+		{ 
+			waitingw--; 
+			semw.V(); 
+		}
+		else
+		{ 
+			mutex.V(); 
+		}
+	}
+}
+
+///////////////////////////////////////////////////
+
+process Writer 
+{
+	while (true) 
+	{
+		mutex.P();
+			if (nr > 0 || nw > 0) 
+			{
+				waitingw++; 
+				mutex.V(); 
+				semw.P();
+			}
+			nw++;
+		mutex.V();
+		
+		wlast = true;
+		//write the database//
+		mutex.P();
+		nw--;
+		if (waitingr>0 && (waitingw==0 || wlast))
+		{ 
+			waitingr--;
+			semr.V(); 
+		}
+		else if(waitingw>0 && (waitingr==0 || !wlast))
+		{ 
+			waitingw--; 
+			semw.V(); 
+		}
+		else
+		{ 
+			mutex.V(); 
+		}
+	}
+}
+
+MESSAGE PASSING
+Le primitive sono send(messaggio, destinatario) e receive(mittente)
+
+	SINCRONO
+		(s)send bloccante
+		(s)receive bloccante
+	ASINCRONO
+		(a)send NON bloccante
+		(a)receive bloccante
+	COMPLETAMENTE ASINCRONO
+		(nb)send NON bloccante
+		(nb)receive NON bloccante
+
+
+Da ASINCRONO a SINCRONO
+ssend(dst, msg):
+	asend(dst, <msg, getpid()>) //Invio il messaggio con il mio PID per la risposta
+	ack = areceive(dst) //Aspettiamo ACK
+
+sreceive(sender):
+	<msg, realsender> = areceive(sender) //Realsender serve a sapere il mittente
+	asend(realsender, ACK) //Inviamo ACK
+	return msg
+
+
+Da SINCRONO ad ASINCRONO
+È necessario aggiungere un processo server.
+
+asend(Object msg, process receiver):
+	ssend(<msg, getpid(), dest>, server) //Messaggio nella forma msg, mittente, destinazione inviato al server
+	
+areceive(process sender):
+	ssend(<NULL, sender, getpid()>, server) //msg di controllo
+	Object m = sreceive(server) //ricevo da server
+	return m
+	
+Process server:
+	boolean waiting[] //waiting[id] = NULL se non aspetta, altrimenti ID del sender o ANY
+	msg db
+	while true:
+		(msg, sender, receiver) = sreceive(ANY) //il server riceve da tutti
+		if msg == NULL //Arriva dal destinatario, nessun messaggio da sender
+			if (((msg = db.get(sender, receiver)) == NULL)
+				waiting[receiver] = sender //sta aspettando un msg da sender
+			else
+				ssend(msg, receiver) //Se c'è un messaggio per lui glielo manda
+		else //Un messaggio da sender
+			if (waiting[receiver] == sender || waiting[receiver] == ANY)
+				ssend(msg, receiver) //Se c'è un messaggio lo spedisce
+				waiting[receiver] = NULL
+			else
+				db.add(msg, sender, receiver)
+
+
+Da ASINCRONO a COMPLETAMENTE ASINCRONO
+nb-send(Object msg, Process receiver):
+	asend((<getpid(), msg>, receiver)
+	
+nb-receive(Process sender):
+	static local db
+	asend(<getpid(), TAG>, getpid()) //per renderla non bloccante abbiamo sempre un messaggio a disposizione
+	while true:
+		<realSender, msg> = areceive(ANY)
+		if (realSender == sender && msg == TAG)
+			break
+		db.add(realSender, msg)
+	return db.get(sender)
+
+
+Da COMPLETAMENTE ASINCRONO ad ASINCRONO
+asend(Object msg, Process receiver):
+	nb-send(msg, receiver)
+	
+areceive(Process sender):
+	Object msg
+	while((msg = nb-receive(sender)) == NULL) //Uso busy waiting per renderla bloccante
+		//NOP
+	return msg
+
+
+Problemi classici:
+
+Produttore - consumatore (sincrono)
+Process producer:
+	while true:
+		x = produce()
+		ssend(server, x)
+
+Process consumer:
+	while true:
+		x = sreceive(server)
+		consume(x)
+		
+Process server:
+	while true:
+		msg = sreceive(producer)
+		ssend(msg, consumer)
+Il processo server funge da intermediario per permettere al producer di produrre un secondo elemento 
+mentre consumer consuma il precedente.
+
+
+Produttore - consumatore / buffer limitato (asincrono)
+Process producer:
+	count = 0
+	while true:
+		x = produce()
+		asend(x, consumer)
+		if (count >= BUFFSIZE):
+			areceive(consumer)
+		count++
+		
+Process consumer:
+	while true:
+		x = areceive(producer)
+		asend(sender, ack)
+		consume(x)
+L’idea è di usare un offset grande quanto la dimensionedel buffer. 
+In questo modosi può inviare il messaggio (BUFFSIZE + 1)-esimo solo quandosi riceve un ack di conferma di un precedente messaggio.
+
+
+Filosofi a cena
+process philo[i]: i=0,...,4
+	while True:
+	//PENSA//
+		asend((reg, i), chopstick[i])
+		arecv(chopstick[i])
+		asend((req, i), chopstick[(i+1) %5])
+		arecv(chopstick[(i+1) %5])
+	//MANGIA//
+		asend((release, i), chopstick[i])
+		asend((release, i), chopstick[(i+1) %5])
+	
+process chopstick[i], i = 0... 4:
+	while True:
+		(tag, index) = arecv(ANY)
+		asend(acknowledge, philo[index])
+		arecv(philo[index]);
+Questa implementazionee’ afflitta da deadlock se tutti i processi riescono a prendere 
+la prima bacchetta e rimangonoin attesa circolare per la seconda.
+
+
+Il problemadeilettori - scrittori si applica ad una struttura condivisa per definizione, quindi
+una soluzione con message passing non avrebbesenso.
+
