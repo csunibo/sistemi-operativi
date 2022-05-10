@@ -1,0 +1,148 @@
+Kernel monolitico = insieme COMPLETO e UNICO di proceduro correlate = efficienza
+				  = + dispositivi = + moduli = ricompilare
+
+Microkernel = quasi tutto fuori dal kernel -> send e receive per message passing
+			= facili da realizzare (+ dispositivi = + proc. utente), meno efficienti, più stabili
+
+Ibridi = Divisi tra kernel space e user space, usano message passing
+
+Exokernel = sperimentali, proc. hanno visione diretta di hardware = definire settori per proc. utente
+
+VM = hypervisor per condivisione HW -> inefficienze da sistemare con particolari istruzioni
+
+Thread = unità base uso CPU -> c'è tabella apposita per gestione -> i thread di stesso proc hanno stesse risorse
+
+Context switch -> Run - Wt; Run - Rdy; Wt - Rdy; Termina
+
+SCHEDULING -> FCFS First come, first served (coda FIFO, convoy effect); 
+			  SJF Shortest job first (Teorico, T_n+1 = at_n + (1-a)T_n); 
+			  Shortest-Remaining-Time First (sempre CPU burst minore)
+			  Real-time = Rate monotonic (basato su periodo più breve) e EDF, earliest deadline first
+
+RISORSE -> Pre-rilasciabile = la funzione di gestione può sottrarla prima ad un processo 
+Le condizioni per avere deadlock, dette di Coffman, sono:
+	- Le risorse devono essere non condivisibili.
+	- Assenza di prerilascio: le risorse coinvolte non possono essere prerilasciate volontariamente dai processi
+	- Le richieste devono essere bloccanti (hold and wait) + proc. che ha già ottenuto risorse può chiederne ancora.
+	- Attesa circolare: ognuno vuole una risorsa che possiede il successivo e l’ultimo vuole quella del primo.
+
+Detection: SE una sola istanza per risorsa + mutex, no cond., no prerilascio -> Deadlock se Holt ha ciclo
+		   SE mutex, no cond., no prerilascio -> NO deadlock se Holt completamente riducibile
+		   SE una sola richiesta sospesa per proc. + mutex, no cond., no prerilascio -> Deadlock se Knot
+
+Per evitare deadlock si deve togliere una delle quattro condizioni
+
+BANCHIERE
+Avail[n][m] = risorse disponibili
+Max [n][m] = Massima richiesta di un certo processo per una certa risorsa
+Alloc[n][m] = Risorse di un certo tipo allocate per un certo processo
+Need[n][m] = Credito residuo di un certo processo per una certa risorsa
+
+Algoritmo per determinare se un particolare stato è sicuro (SAFE) o meno:
+1.
+Siano Work e Finish vettori di lunghezza m e n rispettivamente.
+
+2.
+Work è una copia risorse disponibili (Avail), che verrà modificata durante l'analisi.
+Finish è un vettore di booleani che indica se un particolare processo può terminare o è terminato.
+Inizializza Work su Avail e Finish su false per tutti gli elementi.
+
+3.
+Trova un i tale che valgano:
+(A) Finish[i] == false, 
+(B) Need[i] < Work. //Se per ogni elemento è minore
+	Questo processo non è terminato, ma potrebbe farlo con il working set Avail. 
+Se non esiste, vai al passaggio 4.
+
+Imposta Work = Work + Alloc[i] e imposta Finish[i] su true.
+	Ciò corrisponde al completamento del processo i e al rilascio delle sue risorse 
+Torna al passaggio 2.
+
+4.
+Se finish[i] == true per tutte le i, allora lo stato è Safe, perché è stata trovata una sequenza sicura.
+
+FRAMMENTAZIONE
+La frammentazione interna dipende dall'uso di unità di allocazione di dimensione diversa da quella richiesta 
+La frammentazione esterna, invece, deriva dal susseguirsi di allocazioni e deallocazioni -> compattazione
+
+PAGINAZIONE (HW dedicato)
+Proc. ha spazio di indirizzamento logico, suddiviso in un insieme di blocchi di dimensione fissa detti pagine
+	Si cercano ovunque frame disponibili e si assegnano a pagine
+Usa page table + TLB (veloce, chiave - indirizzo) -> framm. interna max 1 pg
+
+SEGMENTAZIONE (non risolve frammentazione)
+Divide memoria proc. in segmenti distinti (nome - lunghezza) -> può farla compilatore o programmatore
+
+MEMORIA VIRTUALE
+Gli indirizzi virtuali possono essere mappati su indirizzi fisici della memoria primaria o secondaria.
+Quando si tenta di accedere ad un indirizzo in memoria secondaria i dati associati vengono trasferiti in RAM.
+	Si può usare il bit valid che indica se pag. è in RAM
+
+Con page fault -> algoritmi di rimpiazzamento
+FIFO (frame + vecchio, semplice, Belady)
+MIN (Pagina a cui si accede più tardi, Teorico)
+LFU (Pagina meno acceduta -> accessi / attesa; Teorico, poco affidabile)
+LRU (Pagina usata meno recentemente nel passato, stack)
+	Costoso, supportato da poche MMU
+Reference bit -> 1 se pag. è acceduta -> si vede storia e si elimina pag. meno acceduta
+	Orologio -> se reference bit = 1 si pone a 0, se = 0 si elimina la pagina, se tutti a 0 diventa FIFO
+
+WORKING SET (indipendente da rimpiazzamento)
+Insieme delle pagine accedute nei più recenti X riferimenti.
+La somma di tutti i working set dei processi attivi deve essere minore del numero di frame disponibili -> Trashing
+
+ACCESSO AI FILE
+- Sequenziale: 
+	Le informazioni del file si elaborano ordinatamente, 
+		le operazioni di lettura e scrittura fanno avanzare il puntatore del file. 
+	È il metodo più comune, usato da compilatori e editor.
+- Accesso diretto: 
+	Il file si considera come una sequenza numerata di blocchi o record che si possono r/w in modo arbitrario.
+	Le operazioni di lettura e scrittura diventano parametrizzate al blocco da leggere e scrivere
+		Molto utili quando è necessario accedere immediatamente a grandi quantità di informazioni.
+- Accesso indicizzato: Read e write avvengono mediante una chiave che dà accesso all'elemento
+	La chiave diventa l’identificativo del record all’interno del file.
+	Esiste una tabella di corrispondenza chiave-posizione (memorizzabile in memoria o paginabile su disco)
+
+
+Le partizioni hanno una struttura standard:
+- Il boot block è l'inizio di ogni partizione 
+		viene caricato dal MBR che lo attiva ed esegue permettendogli di caricare il SO e lo esegue.
+- Il superblock contiene l'indice del file system
+		informazioni sul tipo file system e sui parametri fondamentali della sua organizzazione.
+- Le tabelle per la gestione dello spazio libero contengono la struttura dati contenente le info sui blocchi liberi.
+- Le tabelle per la gestione dello spazio occupato contengono le informazioni sui file presenti nel sistema
+	Non è presente in tutti i file system.
+- La root dir è la radice del file system.
+- File e directory grazie alla root dir.
+
+
+LINKING
+Hard link: i blocchi dei file non vengono listati nelle directory, ma in una struttura dati associata
+	Viene incrementato il valore nell’Inode del file, in modo che questo sappia da quante directory entries è puntato. 
+	Se viene rimosso un link, l’Inode rimane attivo finché il suo link counter non scende a 0.
+
+Symbolic link: creare un nuovo file che contenga il path del file a cui vuole essere linkato. 
+	Un link simbolico è un file speciale che contiene un riferimento sotto forma di cammino assoluto al file
+	Quando si cerca un file nella directory, se si tratta di un link, viene risolto tramite il suo contenuto.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
