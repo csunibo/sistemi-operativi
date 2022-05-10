@@ -1,0 +1,47 @@
+name: Lint file names
+on: [ push, pull_request ]
+
+jobs:
+  check:
+    name: Check file names
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: actions/checkout@v1
+        with:
+          fetch-depth: 1
+      - uses: csunibo/lint-filenames@v1.1.0
+        name: Link file names under ./appunti
+        with:
+          path: "./appunti"
+          pattern: '^(\.gitkeep|([a-z0-9]+(-[a-z0-9]+)*\.[a-zA-Z]+))$'
+          recursive: "true"
+      - uses: csunibo/lint-filenames@v1.1.0
+        name: Link file names under ./esercizi
+        with:
+          path: "./esercizi"
+          pattern: '^(\.gitkeep|([a-z0-9]+(-[a-z0-9]+)*\.[a-zA-Z]+))$'
+          recursive: "true"
+      - uses: csunibo/lint-filenames@v1.1.0
+        name: Link file names under ./libri
+        with:
+          path: "./libri"
+          pattern: '^(\.gitkeep|([a-z0-9]+(-[a-z0-9]+)*\.[a-zA-Z]+))$'
+          recursive: "true"
+      - uses: csunibo/lint-filenames@v1.1.0
+        name: Link file names under ./lucidi
+        with:
+          path: "./lucidi"
+          pattern: '^(\.gitkeep|(\d+-[a-z0-9]+(-[a-z0-9]+)*\.[a-zA-Z]+))$'
+          recursive: "true"
+      - uses: csunibo/lint-filenames@v1.1.0
+        name: Link file names under ./prove
+        with:
+          path: "./prove"
+          pattern: '^(\.gitkeep|(scritto|totale|parziale\d?|orale\d?|progetto\d?)-(testo|soluzione)-\d{4}(-[a-z0-9]+)*\.[a-zA-Z]+)$'
+          recursive: "true"
+      - uses: csunibo/lint-filenames@v1.1.0
+        name: Link file names under ./varie
+        with:
+          path: "./varie"
+          pattern: '^(\.gitkeep|([a-z0-9]+(-[a-z0-9]+)*\.[a-zA-Z]+))$'
+          recursive: "true"
