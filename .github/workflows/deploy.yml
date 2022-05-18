@@ -31,7 +31,7 @@ jobs:
         run: ./.github/workflows/rec "*\.md$" ${GITHUB_WORKSPACE}/.github/workflows/md2pdf
 
       - name: Generate static directory listing
-        run: statik -l -b "https://${{ github.event.repository.owner.name }}.github.io/${{ github.event.repository.name }}/" -i "\.(pdf|link|txt)$" -e "\.git(hub|ignore|keep)?"
+        run: statik -l -b "https://${{ github.event.repository.owner.name }}.github.io/${{ github.event.repository.name }}/" -i "\.(pdf|link|txt|c|h|py|sh)$" -e "\.git(hub|ignore|keep)?"
 
       - name: Deploy to Pages
         uses: JamesIves/github-pages-deploy-action@4.1.0
