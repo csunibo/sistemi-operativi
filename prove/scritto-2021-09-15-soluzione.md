@@ -54,4 +54,4 @@ T chained_recv(void) {
 2. Sia n un numero naturale strettamente maggiore di 3. Scegliamo la sequenza
    $k$ in questione con indici successivi da 1 a $2 n + 4$ inclusi. Sia $i$ un
    indice valido per la sequenza. Allora:
-   $$k_i = \begin{cases} i, & \text{se} 1 \leq i \leq n \\ 1, & \text{se} i = n + 1 \\ 2, & \text{se} i = n + 2 \\ n + 1, & \text{se} i = n + 3 \\ i - n - 3, & \text{se} n + 4 \leq i \leq 2 * n + 4 \end{cases}$$
+   $$k_i = \begin{cases} i, & \text{se}\ 1 \leq i \leq n \\ 1, & \text{se}\ i = n + 1 \\ 2, & \text{se}\ i = n + 2 \\ n + 1, & \text{se}\ i = n + 3 \\ i - n - 3, & \text{se}\ n + 4 \leq i \leq 2 * n + 4 \end{cases}$$
