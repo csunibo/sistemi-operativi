@@ -1,0 +1,376 @@
+ORALI 23/06
+
+TUTTE LE SOLUZIONI SONO SOLUZIONI *PROPOSTE* DAGLI STUDENTI
+Le risposte indicate con **R sono quelle date dal prof
+
+1)
+Servizio di message passing asincrono: quali primitive devo implementare?
+	asend e arcv
+Scrivere le funzioni asend e arcv: quale signature hanno?
+	asend(msg, destination)
+	arcv(sender)
+
+Scrivere monitor che implementi il servizio di msg passing (semplificazione: rcv sempre da any)
+
+monitor m
+{
+	queue q;
+
+	//introduco condizioni
+	condition ok2rcv[];
+
+	asend(T msg, Process destination)
+	{
+		q.enqueue(<destination , msg>);
+		ok2rcv[destination].signal();
+	}
+
+	T arcv()
+	{
+		if(q.contains(self()))
+			ok2rcv<self>.wait();
+		
+		obj T = q.dequeue(q.first<self()>);
+		return obj;
+	}
+}
+/////////////
+Durante: 
+Send e rcv sono bloccanti?
+Cosa deve fare la send?
+Problema: controllare che chi riceve sia quello giusto (self() rappresenta il mio pid)
+//////////
+
+Domande:
+Perchè si usa signal urgent? che benefici dà nella programmazione?
+	Cosa significa signal urgent?
+		Cos'è lo urgent stack?
+	Cosa succede quando un processo fa una signal?
+		Se il processo svegliato con la signal fa a sua volta un'altra signal?
+		
+A cosa serve l'algoritmo del banchiere?
+	A cosa serve essere sempre nello stato di safe?
+		A grandi linee quando chiamiamo l'algoritmo del banchiere e chi lo chiama?
+			**R: quando un processo chiede o rilascia risorse
+
+Quando viene usato l'algoritmo di rimpiazzamento?
+	Quando avviene page fault?
+		Qual è lo scopo finale di questo meccanismo?
+			In quale capitolo del corso abbiamo trattato questo problema?
+		Quale tipo di memoria primaria è usata in questo meccanismo?
+			**R: memoria virtuale
+			
+Cos'è un knot in un grafo di Holt?
+Se abbiamo una situazione di trashing cosa possiamo fare per risolvere il problema?
+	Cosa misura il working set?
+//////////////
+
+Dati:
+	asend(msg, destination)
+	arcv(sender)
+Implementare le versioni sincrone:
+	ssend(msg, destination)
+	srcv(sender)
+	
+ssend(msg, dest)
+{
+	asend(msg, dest);
+	while true:
+		T msg = arcv(dest);
+		if(msg == this.msg):
+			break;
+}
+
+T srcv(sender)
+{
+	T msg = arcv(sender);
+	asend(msg, sender);
+	return msg;
+}
+//////////////////////////////////
+
+2)
+Partendo dal primo esercizio di prima: se volessimo farlo completamente asincrono? (send e rcv non sono bloccanti)
+	Commentare le righe giuste
+
+monitor m
+{
+	queue q;
+
+	//condition ok2rcv[];
+
+	asend(T msg, Process destination)
+	{
+		q.enqueue(<destination , msg>);
+		//ok2rcv[destination].signal();
+	}
+
+	T arcv()
+	{
+		//if(q.contains(self()))
+			//ok2rcv[<self()>].wait();
+		
+		obj T = q.dequeue(q.first<self()>);
+		return obj;
+	}
+}
+/////////////
+Durante: 
+Quando introduciamo una variabile di condizione?
+Qui quali processi devono essere messi in attesa? **R: nessuno
+/////////////
+
+Propone monitor, chiede cosa fa e di analizzare il funzionamento
+
+monitor enigma: 
+	condition ok2beta, ok2alpha; 
+	queue q; 
+
+	entry alpha(val): 
+	if len(q) >= 42: 
+		okalpha.wait() 
+	q.enqueue(val) 
+	if !q.empty(): 
+		ok2beta. signal() 
+	if len(q) < 42 
+		ok2alpha.signal() 
+
+	entry beta(): 
+	if q.empty(): 
+		ok2beta.wait() 
+	tmp = q.dequeue() 
+	if !q.empty(): 
+		ok2beta. signal() 
+	if len(q) < 42 
+		ok2alpha.signal() 
+	return tmp 
+
+** NB: è un buffer limitato
+////////////////////////
+
+3)
+Viene proposto un altro monitor, chiamato da tanti processi e chiesto quale funzionalità potrebbe avere
+	(chi chiama alpha, chiama poi end alpha e viceversa)
+
+monitor enigma:
+	condition ok2beta, ok2alpha 
+	int nbeta=0, nalpha=0 
+
+	entry alpha():
+	 if nbeta > 0: 
+		ok2alpha.wait() 
+	 nalpha++ 
+	 ok2alpha. signal() 
+	 
+	entry beta(): 
+	if nalpha > 0: 
+		ok2beta.wait() 
+	nalpha++
+	ok2beta.signal() 
+
+	entry endalpha(): 
+	nalpha--; 
+	if nalpha == 0 
+		ok2beta.signal() 
+
+	entry endbeta(): 
+	nbeta--
+	if nbeta == 0: 
+		ok2alpha.signal() 
+
+////////////
+Durante:
+Può essere che sia contemporaneamente nalpha >0 e nbeta >0?
+Se nalpha>0 e arrivano dei beta cosa succede?
+Che problema ricorda questo monitor? **R: Implementazione di un senso unico nella condivisione tra processi
+Rispetto al problema produttori-consumatori che obiettivo hanno le due entry aggiuntive?
+Può esserci starvation o deadlock?
+///////////
+
+Trasformare il codice per evitare starvation
+	Conto gli alpha e i beta che aspettano
+
+monitor enigma:
+	condition ok2beta, ok2alpha 
+	int nbeta=0, nalpha=0 
+	
+	int waiting_a=0; //
+	int waiting_b=0; //
+
+	entry alpha():
+	waiting_a++; //
+	 if nbeta > 0 || waiting_b >0: //
+		ok2alpha.wait() 
+	waiting_a--; //
+	 nalpha++ 
+	 ok2alpha. signal() 
+	 
+	entry beta(): 
+	waiting_b++; //
+	if nalpha > 0 || waiting_a >0: //
+		ok2beta.wait() 
+	waiting_b--; //
+	nalpha++
+	ok2beta.signal() 
+
+	entry endalpha(): 
+	nalpha--; 
+	if nalpha == 0 
+		ok2beta.signal() 
+
+	entry endbeta(): 
+	nbeta--
+	if nbeta == 0: 
+		ok2alpha.signal() 
+
+////////////
+Durante:
+In che paradigma siamo con i monitor? E con message passing?
+/////////////////////
+
+4)
+Commentare il codice:
+è presente un dizionario condiviso
+se val non è nel dizionario metto in attesa
+altrimenti sblocco
+
+monitor enigma: 
+	d {}
+
+	entry beta(val) 
+	{
+		if val in d: 
+		d[val].signal() 
+
+		else cv = condition() // new condition var 
+		d[val] = cv 
+		cv.wait() 
+		del d[val] 
+	}
+
+Dato uno stato iniziale dove il dizionario è vuoto:
+cosa succede se chiamo beta(42)?
+e se dopo chiamo beta(12)?
+e se ri-chiamo beta(12)?
+Come si potrebbe descrivere il funzionamento del monitor?
+
+Abbiamo a disposizione message passing asincrono
+	asend(msg, destination)
+	arcv(sender)
+
+implementare senza far uso di processi server:
+mysend(msg,dest)
+myrcv(senderS) -> specifica un insieme e si sblocca quando arriva un messaggio da uno dei mittenti
+
+mysend(msg,dest)
+{
+	asend(<self(), msg>, dest)
+}
+
+myrcv(senders)
+{
+	static local db; //add(), get()
+	
+	while true
+	{
+		msg = db.get(senders);
+		if(msg != NULL) //Ho trovato il msg
+		{
+			break;
+		}
+		
+		<realsender, msg> = arcv(*)
+		db.add(realsender, msg); // Aggiungo il msg al db
+		return msg;
+	}
+}
+
+Domande:
+Quando non è consigliabile uno scheduler round robin?
+La visione di un video è interattiva?
+Quando avviene trashing?
+	Come può succedere? Come creo trashing?
+		Se ho una ram da 4gb e carico programmi che per le loro necessità usano 4gb c'è trashing?
+			Se invece carico 8gb?
+				Perchè posso caricare 8gb con una ram di 4gb?
+	**R: per essere quasi certo di avere trashing devo caricare processi per 5-6 volte la dimensione della ram
+Cos'è un worm?
+//////////////////////////////
+
+5)
+Commentare questo monitor:
+
+monitor enigma: 
+	condition c 
+	int n = 0; 
+
+	entry alpha(): 
+	n++ 
+	if n < 3: 
+		c.wait() 
+	n--
+	if n > 2: 
+		c.signal() 
+
+Simulare l'esecuzione per qualche volta e spiegare il funzionamento
+
+
+Cambia il codice:
+
+monitor enigma: 
+	condition c 
+	int n = 0; 
+
+	entry alpha(): 
+	n++ 
+	if n < 3: 
+		c.wait() 
+	n--
+	if n > 1: //
+		c.signal() 
+
+Spiegare il funzionamento
+
+
+Cambia di nuovo
+
+monitor enigma: 
+	condition c 
+	int n = 0; 
+
+	entry alpha(): 
+	n++ 
+	if n < 3: 
+		c.wait() 
+	n--
+	//
+	c.signal() 
+
+Spiegare il funzionamento
+
+Data:
+	fun(x,z,y) = <x = x + z, y = x>
+può essere usata per la test&set?
+
+Cosa cerchiamo in una funzione per la test and set?
+Com'è originariamente la test&set? **R: td(x,y) = <x=y, y=1>
+Perchè è proprio così?
+	Cosa rappresenta y=1?
+Fare uno spin-lock.
+	while true
+	{
+		td(local, global)
+		if local != 1 //nessuno ha fatto la td
+		{
+			break;
+		}
+		//critical code
+	}
+	global = 0;
+
+Provare ad usare fun al posto di td.
+//
+
+Domande:
+Se ho message passsing asincrono voglio creare quello sincrono, serve un server? Perchè?
+//////////////////////////
