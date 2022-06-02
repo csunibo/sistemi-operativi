@@ -1,4 +1,4 @@
-# Prova scritta di sistemi operativi dell'01 giugno 2022
+# Prova scritta di sistemi operativi dell'1 giugno 2022
 
 ## c.1
 
@@ -112,14 +112,14 @@ casi sulla scelta del primo processo della permutazione:
 
 Oltre al vincolo di cui sopra, per soddisfare p1 deve valere:
 
-$$n_(1) = n_1 = c_1 - p_1 = (4, 2, 4) - (2, 0, 0) = (2, 2, 4) \leq avail[1] = COH $$
+$$n_{(1)} = n_1 = c_1 - p_1 = (4, 2, 4) - (2, 0, 0) = (2, 2, 4) \leq avail[1] = COH $$
 
 I due vincoli possono essere riassunti nella equivalente forma:
 $$(2, 2, 4) \leq COH$$
 
 Convenientemente, questo vincolo ci permette di soddisfare anche i p2 e p3 in
 quest'ordine: scegliendo questa permutazione, infatti, valgono sia
-$n_(2) \leq avail[2]$ che $n_(3) \leq avail[3]$.
+$n_{(2)} \leq avail[2]$ che $n_{(3)} \leq avail[3]$.
 
 Quest'ultimo vincolo su COH è quindi sufficiente e necessario per la sicurezza
 di uno stato che può soddisfare tutti i processi a partire da p1 (è quindi anche
@@ -135,7 +135,7 @@ $(4, 4, 8)$ è quindi un primo minimo per il capitale iniziale.
 
 Analogamente al primo caso:
 
-$$n_(1) = n_2 = c_2 - p_2 = (4, 4, 2) - (0, 2, 0) = (4, 2, 2) \leq avail[1] = COH $$
+$$n_{(1)} = n_2 = c_2 - p_2 = (4, 4, 2) - (0, 2, 0) = (4, 2, 2) \leq avail[1] = COH $$
 
 $$(4, 2, 2) \leq COH$$
 
@@ -147,7 +147,7 @@ Tornando a IC, notiamo che $(6, 4, 6)$ è il nostro secondo minimo.
 
 Analogamente agli altri casi:
 
-$$n_(1) = n_3 = c_3 - p_3 = (2, 4, 4) - (0, 0, 4) = (2, 4, 0) \leq avail[1] = COH $$
+$$n_{(1)} = n_3 = c_3 - p_3 = (2, 4, 4) - (0, 0, 4) = (2, 4, 0) \leq avail[1] = COH $$
 
 $$(2, 4, 0) \leq COH$$
 
