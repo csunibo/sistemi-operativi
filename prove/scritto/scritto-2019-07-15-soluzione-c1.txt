@@ -1,0 +1,28 @@
+monitor PairBuf<T> {
+  Queue<T> values;
+  condition read;
+  condition write;
+  int size;
+
+  void put(T x) {
+    ++size;
+    values.enqueue(x)
+    if(values.size() == size)
+      repeat(size)
+        read.signal()
+    else
+      write.wait()
+    --size;
+  }
+
+  T get() {
+    if(values.size() == size)
+      repeat(size)
+        read.signal()
+    else
+      read.wait()
+
+    write.signal()
+    return values.pop()
+  }
+}

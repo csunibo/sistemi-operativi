@@ -1,0 +1,58 @@
+enum BridgeState {
+  UP = 0, DOWN = 1
+}
+
+monitor bridge {
+  BridgeState state;
+  conditon waitState[BridgeState];
+  int waitingOnState = 0;
+  int carsOnLane[2] = {0,0};
+  condition spaceOnLane[2];
+  bool shipCrossing[2] = {false,false}
+  condition emptyChannel[2];
+
+  procedure entry car_enter(bool direction) {
+    if(state != BridgeState.DOWN) {
+      ++waitingOnState;
+      waitState[BridgeState.DOWN].wait();
+    }
+
+    if(carsOnLane[direction] == MAXCAR)
+      spaceOnLane[direction].wait();
+
+    ++carsOnLane[direction];
+  }
+  procedure entry car_leave(bool direction) {
+    --carsOnLane[direction];
+    if(!waitingOnState)
+      spaceOnLane[direction].signal();
+    else if(carsOnLane[direction] == 0 && carsOnLane[!direction]) {
+      state = BridgeState.UP;
+      n = waitingOnState
+      waitingOnState = 0
+      while(n--)
+        waitState[BridgeState.UP].signal();
+    }
+  }
+  procedure entry boat_enter(bool direction) {
+    if(state != BridgeState.UP)
+      waitState[BridgeState.UP].wait();
+
+    if(shipCrossing[direction])
+      emptyChannel[direction].wait();
+
+    shipCrossing[direction] = true;
+  }
+  procedure entry boat_leave(bool direction) {
+    shipCrossing[direction] = false;
+    if(!waitingOnState)
+      emptyChannel[direction].signal();
+    else if(shipCrossing[!direction]) {
+      state = BridgeState.DOWN;
+      n = waitingOnState
+      waitingOnState = 0
+      while(n--)
+        waitState[BridgeState.DOWN].signal();
+    }
+  }
+}

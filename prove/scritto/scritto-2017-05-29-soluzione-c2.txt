@@ -1,0 +1,16 @@
+void dmsgsend_fixed(pid_t dest, msg_t msg) {
+  dmsgsend(dest, (dest, msg));
+}
+
+msg_t dmsgrecv() {
+  (_, msg) = dmsgrecv();
+  return msg;
+}
+
+process ufficio {
+  dset_lost_n_found(get_pid());
+  while(1) {
+    (dest, msg) = dmsgrecv();
+    dmsgsend(dest, (dest, msg));
+  }
+}

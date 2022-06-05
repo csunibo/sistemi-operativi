@@ -1,0 +1,49 @@
+// if we have a blocking areceive (not an nbreceive) we first need to convert
+// it to a non blocking (busy waiting) receive.
+// if the message delivery policy is not FIFO this approach would certainly
+// lead to starvation as real incoming messages would always be shadowed by
+// dummy ones. This is the best that can be accomplished with the given
+// constraints.
+
+bool skip = false;
+
+// areceive to nbreceive
+T | None nbreceive(pid_t p) {
+  if(!skip)
+    asend((get_pid(), null), get_pid()); // always have something from myself
+                                         // to read when no messages are incoming
+  (pid, data) = areceive(p || get_pid()); // chiaramente meh, ma ci sono alternative
+  if(pid == get_pid() && data == null) {
+    skip = false;
+    return None;
+  }
+
+  // a meaningful message has been receive. on the next call we won't be
+  // needing a new dummy message to be sent as there'll be already one in queue.
+  skip = true
+  return data
+}
+
+// overriding asend to comply to the above-defined message format
+void asend<T>(T data, pid_t p) {
+  asend((get_pid(), data), p);
+}
+
+// now the required pssend can be implemented
+void pssend<T>(T data, pid_t p) {
+  // referring to the one implemented above
+  asend<T>((get_pid(), data), p);
+  (pid_t, T) data;
+  while((data = areceive(p)) && data.second != ACK)
+    asend(data, get_pid());
+}
+
+T | None psreceive(pid_t p) {
+  res = nbrecieve(p);
+  if(res != None) {
+    asend(ACK, res.first);
+    return res.second;
+  }
+
+  return None;
+}

@@ -1,0 +1,23 @@
+binary_semaphore_t mutex = 1;
+semaphore_t all_out = 0;
+int in_section, exiting = 0, 0;
+
+void SAU_enter() {
+  mutex.P()
+  ++in_section;
+  mutex.V()
+}
+
+void SAU_exit() {
+  mutex.P()
+  if(++exiting == in_section) {
+    repeat(in_section-1)
+      all_out.V()
+    in_section = 0;
+    exiting = 0;
+    mutex.V()
+  } else {
+    mutex.V()
+    all_out.P()
+  }
+}

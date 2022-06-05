@@ -1,0 +1,37 @@
+monitor conferenza {
+  bool speaking = false;
+  condition inNext;
+  // tutte le value a false di default
+  Set<string> skipped;
+  // tutte le value a false di default
+  map[string][bool] arrived;
+
+  map[string][condition] speak;
+
+  process entry bool chiama(name string) {
+    if(speaking)
+      inNext.wait();
+
+    if(arrived[name])
+      speak.signal();
+      speaking.wait();
+      return true;
+    else
+      return false;
+  }
+
+  process entry void arrivato(name string) {
+    if(skipped[name])
+      return false;
+    else
+      arrived[name] = true;
+      speak[name].wait();
+      speaking = true;
+  }
+
+  process entry void finepresentazione(name string) {
+    speaking = false;
+    arrived[name] = false;
+    inNext.signal();
+  }
+}

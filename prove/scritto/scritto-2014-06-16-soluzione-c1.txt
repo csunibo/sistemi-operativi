@@ -1,0 +1,29 @@
+struct rv {
+  int count;
+  condition cnd;
+  int vec[];
+}
+
+monitor rendezvous {
+  HashMap<int, rv> waiting
+
+  procedure entry int[] sync(int n, int vec[n]) {
+    if(!waiting.hasKey(n))
+      rv = waiting.add((n, { count: 1, cnd: new condition, vec: int[n] }))
+    else
+      rv = waiting.get(n)
+
+    rv.vec[rv.count] = vec[0]
+
+    if(++rv.count == n)
+      --rv.count
+      rv.cnd.signal()
+    else
+      rv.cnd.wait()
+      if(--rv.count > 0)
+        rv.cnd.signal()
+
+    for(int i = 0; i < n; ++i)
+      vec[i] = rv.vec[i]
+  }
+}

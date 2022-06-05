@@ -1,0 +1,27 @@
+monitor pairbuf<T> {
+  condition waitr, waitw;
+  int nr = 0, nw = 0;
+  Queue<T> buf;
+  
+  procedure entry void put(T x) {
+    nw++
+    buf.enqueue(x);
+
+    if(nr <= 0)
+      waitw.wait();
+    else
+      waitr.signal();
+    nw--;
+  }
+
+  procedure entry T get() {
+    nr++;
+    if(nw <= 0)
+      waitr.wait();
+    else
+      waitw.signal();
+
+    nr--;
+    return queue.dequeue();
+  }
+}

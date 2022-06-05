@@ -131,7 +131,7 @@ $$(4, 4, 8) \leq IC$$
 
 $(4, 4, 8)$ è quindi un primo minimo per il capitale iniziale.
 
-## Cominciare da p2
+### Cominciare da p2
 
 Analogamente al primo caso:
 
@@ -143,7 +143,7 @@ La permutazione (p2, p3, p1) è ora automaticamente soddisfatta.
 
 Tornando a IC, notiamo che $(6, 4, 6)$ è il nostro secondo minimo.
 
-## Cominciare da p3
+### Cominciare da p3
 
 Analogamente agli altri casi:
 

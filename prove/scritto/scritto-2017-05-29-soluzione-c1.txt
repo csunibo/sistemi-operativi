@@ -1,0 +1,84 @@
+enum gamestate {
+  waiting,
+  playing,
+  ended,
+}
+
+monitor rb {
+  condition win;
+  condition play[A, B][0, .., MAX-1];
+  bool ready[A,B][0, .., MAX-1];
+  bool captured[A,B][0, .., MAX-1];
+  bool teamcaptured[A,B];
+  condition waiterAdded;
+
+  gamesate state;
+  int teamsize;
+  [int, int] score;
+
+  procedure entry nuovapartita() {
+    state = waiting;
+    score = [0,0];
+  }
+
+  procedure entry [int, int] chiama(int[] players) {
+    lookingFor = []
+    for(player : players) lookingFor.push((B, player), (B, player))
+    do {
+      for((team, player) : lookingFor)
+        if(ready[team][player])
+          lookingFor.remove((team, player))
+      if(lookingFor.size() > 0)
+        waiterAdded.wait();
+    } while(lookingFor.size() > 0)
+
+    for(int i = 0; i < MAX; ++i)
+      captured[team][i] = 0;
+    teamcaptured[A] = 0;
+    teamcaptured[B] = 0;
+    teamsize = len(players)
+    state = playing;
+
+    for(player : players)
+      play[team][player].signal();
+
+    win.wait();
+    if(score[A] == 10 || score[B] == 10) {
+      state = ended;
+      // Unblock any remaining blocked students
+      for(int i = 0; i < MAX; ++i) {
+        if(ready[A][i])
+          play[A][i].signal();
+        if(ready[B][i])
+          play[B][i].signal();
+      }
+    }
+    if(state != playing)
+      return score;
+  }
+
+  procedure entry bool pronto(int team, int player) {
+    if(state == ended)
+      return 1
+
+    ready[team][player] = 1;
+    waiterAdded.signal();
+    play[team][player].wait();
+    ready[team][player] = 0;
+
+    if(state == ended)
+      return 1
+    else
+      return 0
+  }
+
+  procedure entry void allabandiera(int team, int player) {
+    captured[team][player] = 1;
+    ++teamcaptured[team];
+    if(sum >= teamsize) {
+      state = waiting;
+      ++score[team];
+      win.signal();
+    }
+  }
+}

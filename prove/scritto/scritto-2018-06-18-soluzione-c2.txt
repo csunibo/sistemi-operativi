@@ -1,0 +1,12 @@
+a) la tecnica del passaggio del testimone consiste nel cedere una
+   critical section ad un altro processo sbloccandolo da un precedente
+   stato di blocco. In tal caso sara' compito del processo sbloccato chiudere
+   la critical section.
+   In questo particolare caso la critical section offerta dal semaforo binario
+   `mutex` viene cedura da V() al processo che va a sbloccare nel ramo then dell'if.
+   Dualmente nella P quando ci si blocca sul semaforo binario `sem` si assume
+   che una volta sbloccati ci si trovi in una critical section e la si chiude
+   al termine della procedura. Questa tecnica e' particolarmente utile per evitare
+   starvation di una delle due parti.
+
+b)

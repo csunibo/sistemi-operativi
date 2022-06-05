@@ -1,0 +1,78 @@
+enum Where {
+  TERRAFERMA = 0, ISOLA = 1
+}
+
+monitor tmon {
+  Where loc = TERRAFERMA;
+  bool in = true;
+  condition docked[len(Where)];
+  int waiting_off[len(Where)], waiting_in[len(Where)];
+  condition off[len(Where)], in[len(Where)]; // get off, get in
+  condition empty;
+  condition full;
+
+  int onboard = 0;
+  condition ramp;
+
+  condition atLoc[len(Where)];
+
+  procedure entry al_porto(Where w) {
+    loc = w
+    atLock[w].signal()
+    if(onboard > 0)
+      in = false
+      off[w].signal()
+      empty.wait()
+
+    in = true
+    in[w].signal()
+    full.wait()
+  }
+
+  void waitLoc(Where w) {
+    if(loc != w)
+      atLoc[w].wait()
+      atLock[w].signal()
+  }
+
+  procedure entry imbarca(Where w) {
+    waitLoc(w)
+    docked[w].wait()
+    docked[w].signal()
+    if(!in)
+      ++waiting_in[w]
+      in[w].wait()
+      --waiting_in[w]
+      // limit cars getting in to MAX
+      if(++onboard < MAX)
+        in[w].signal()
+
+    ramp.wait()
+  }
+
+  procedure entry imbarcato(Where w) {
+    ramp.signal()
+    ++onboard
+    if(waiting_in == 0 || onboard == MAX)
+      full.signal()
+  }
+
+  procedure entry sbarca(Where w) {
+    waitLoc(w)
+    docked[w].wait()
+    docked[w].signal()
+    if(in)
+      ++waiting_off[w]
+      off[w].wait()
+      --waiting_off[w]
+      off[w].signal()
+
+    ramp.wait()
+  }
+
+  procedure entry sbarcato(Where w) {
+    ramp.singal()
+    if(--onboard == 0)
+      empty.signal()
+  }
+}

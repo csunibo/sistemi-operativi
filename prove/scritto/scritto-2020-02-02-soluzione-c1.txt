@@ -1,0 +1,28 @@
+monitor Delay {
+  condition waiting[];
+  int waiting;
+
+  Delay() {
+    cnt = 0;
+  }
+
+  int count() {
+    return waiting.length;
+  }
+
+  bool delay(unsigned int timeout) {
+    condition cnd = 0;
+    waiting.append([cnd, timeout])
+    cnd.wait();
+  }
+
+  void tick() {
+    unsigned int i = waiting.length;
+    while(i--) {
+      [cond, val] = waiting[i];
+      val--;
+      if(val == 0)
+        cond.signal()
+    }
+  }
+}

@@ -1,0 +1,35 @@
+monitor SemTimeout {
+  Queue<(condition, unsigned int)> sems;
+  value = 0;
+
+  SemTimeout()  {
+    sems = new Queue<(condition, unsigned int)>()
+  }
+
+  boolean P(unsigned int timeout) {
+    if(value == 0) {
+      condition cnd;
+      pair = (cnd, timeout)
+      sems.enqueue(pair)
+      cnd.wait();
+      sems.remove(pair)
+      --value;
+      return pair.second == 0
+    }
+    return false
+  }
+
+  void V() {
+    if(!sems.empty())
+      sems.pop().signal()
+  }
+
+  void tick() {
+    if(sems.empty())
+      return;
+    
+    for(pair : sems)
+      if(--pair.second == 0)
+        pair.first.signal()
+  }
+}

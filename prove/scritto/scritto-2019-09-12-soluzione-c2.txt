@@ -1,0 +1,30 @@
+BinarySemaphore mutex = new BinarySemaphore(1)
+BinarySemaphore wait = new BinarySemaphore(1);
+unsigned int state = 0;
+
+process bohm[i, i=0,1] {
+  for(;;) {
+    pre(i);
+    print(i);
+    post(i);
+  }
+}
+
+void pre(int n) {
+  mutex.P()
+  if(state != n) {
+    mutex.V()
+    wait.P()
+  } else
+    mutex.V()
+}
+
+void post(int n) {
+  mutex.P()
+  state = 1 - state
+  mutex.V()
+  wait.V()
+}
+
+/* l'implementazione originale porta a deadlock quando la signal del processo
+  attualmente in stampa non viene catturata dalla wait del processo in attesa */

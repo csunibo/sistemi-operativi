@@ -1,0 +1,29 @@
+Scrivere uno stato per un algoritmo per l'algoritmo del banchiere a tre valute in modo tale che lo stato non sia safe ma
+se si considerassero solamente due valute alla volta lo stato sarebbe safe.
+
+IC (2, 2, 2)
+forall i c_i (1, 1, 1)
+
+p_1 (0,1,1)
+p_2 (1,0,1)
+p_3 (1,1,0)
+
+n_1 (1, 0, 0)
+n_2 (0, 1, 0)
+n_3 (0, 0, 1)
+
+COH = (0,0,0)
+
+es. per altri stati
+
+IC (2, 2)
+forall i c_i (1, 1)
+p_1 (0, 1)
+p_2 (1, 0)
+p_3 (1, 1)
+
+n_1 (1, 0)
+n_2 (0, 1)
+n_3 (0, 0) prima o poi n_3 si liberea'
+
+COH = (0,0)

@@ -1,0 +1,35 @@
+a) Uno scheduler round-robin inserisce un processo in attesa di una risorsa IO
+   in fondo alla coda dei processi ready una volta che esso viene sbloccato,
+   al fine di dare la possibilita' ad altri processi in attesa di compiere le
+   proprie azioni e per evitare starvation. Tuttavia, cosi' facendo, un processo
+   che esegue un alto numero di richieste IO come una applicazione multimediale,
+   potrebbe trovarsi troppo tempo in coda ad attendere l'esecuzioen di altri
+   processi (in particolare cio' si verifica in un sistema "affollato").
+
+   Una possibile soluzione a questa problematica e' inserire le applicazioni
+   con un alto numero di operazioni IO in una cosa di priorita' piu' alta per
+   dargli precedenza rispetto ad altre task che possono aspettare come demoni
+   in background o task ricorrenti (cronjob).
+
+b) Per risolvere il trashing non e' _necessario_ uccidere forzatamente alcun
+   processo. Sicuramente l'eliminazione di un processo e la conseguente
+   liberazione di una determinata area di memoria risulterebbe in una veloce
+   soluzione al problema veloce.
+   Tuttavia, per uscire da una situazione di trashing, che si verifica qunado
+   molti processi accedeono ad indirizzi logici frequentemenete sparsi tra
+   memoria centrale e secondaria (generando innumerevoli page fault), e'
+   sufficiente mettere in pausa alcuni processi, in attesa che altri completino
+   la loro esecuzione e liberino aree di memoria dove i processi messi in pausa
+   potranno poi caricare i dati a loro necessari in memoria centrale.
+
+c) A partia' di dirschi RAID 5 consente di utilizzare una maggior quantita' di
+   spazio per memorizzare dati effettivi. Sia RAID1 che RAID5 possono tollerare
+   fino al fallimento di 1 disco in quanto utilizzano 1 bit di parita'. Tuttavia
+   RAID5 utilizza bit di parita' per riparare un eventuale strip di dati perso,
+   mentre RAID1 funziona duplicando ogni strip su piu' dischi. In questo modo
+   RAID5 lascia molto piu' spazio per memorizzare dati, mentre con RAID1 si ha
+   a disposizione sempre e comunque la meta' dello spazio fisicamente disponibile.
+   FORSE: Con RAID1 tuttavia, avendo i dati duplicati in tutto il pool di dischi
+   e' statisticamente piu' probabile che la rottura di due dischi non provochi la
+   perdita di alcun dato, mentre con RAID5 la rottura di piu' di un disco portera'
+   sicuramente a una qualche quantita' di dati distrutti.

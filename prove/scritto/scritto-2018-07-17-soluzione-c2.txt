@@ -1,0 +1,29 @@
+// condizione per pop: vec.size() > 0
+
+lifobuf = {
+  vec: Stack(),
+  mutex: new BinarySemaphore(1),
+  read: new Semaphore(0),
+  wr: 0,
+}
+
+lifobuf.push(value) {
+  mutex.P()
+  vec.push(value)
+  if(wr)
+    rw.V()
+  else
+    mutex.V()
+}
+
+lifobuf.pop() {
+  mutex.P()
+  if(vec.size() <= 0) {
+    wr++;
+    mutex.V()
+    read.P()
+  }
+  val = vec.pop()
+  mutex.V()
+  return val
+}

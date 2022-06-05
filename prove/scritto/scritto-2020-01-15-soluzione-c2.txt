@@ -1,0 +1,12 @@
+void <T>mulsend(pid_t destination, T msg, int times) {
+  for(int i = 0; i < times; ++i) {
+    asend(destination, (msg, get_pid()))
+    arecv(destination);
+  }
+}
+
+T <T>multrecv(pid_t sender) {
+  (msg, sender) = arecv(sender || ANY)
+  asend(sender, ACK)
+  return msg
+}

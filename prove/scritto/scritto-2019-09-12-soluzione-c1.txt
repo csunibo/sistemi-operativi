@@ -1,0 +1,51 @@
+monitor MBuf<T> {
+  Queue<(T, usigned int)> data;
+  Queue<condition> waiting;
+  unsigned int size;
+
+  MBuf() {
+    size = 0;
+  }
+
+  void unblock(unsigned int n) {
+    int i = 0;
+    for(ele : waiting)
+      ele.signal()
+      if(++i == n)
+        break;
+  }
+  
+  add(T data, unsigned int n) {
+    if(size == MAXELEM)
+      canAdd.wait()
+
+    ++size;
+    data.enqueue(
+      data,
+      n
+    );
+
+    if(waiting.size() >= n)
+      unblockWhenReady(n)
+  }
+
+  T get() {
+    condition cnd;
+    waiting.enqueue(cnd);
+    if(waiting.size() < data.getHead().second)
+      cnd.wait();
+    else
+      unblock(data.getHead().second)
+
+    /* pair e' il dato effettivo nella struttura,\
+        non una copia */
+    pair = data.getHead()
+    if(--pair.second == 0) {
+      data.remove(pair)
+      --size;
+      canAdd.signal();
+    }
+
+    return pair.first
+  }
+}

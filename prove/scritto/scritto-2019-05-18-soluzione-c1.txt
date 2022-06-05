@@ -1,0 +1,31 @@
+monitor storage {
+  int components[16];
+  (condition, int) waiting[16];
+
+  procedure entry add(int[16] c) {
+    for(int i = 0; i < 16; ++i)
+      components[i] += c[i]
+      repeat(waiting[i].second)
+        waiting[i].first.signal()
+  }
+
+  procedure entry get(int[16] requirements) {
+    for(int i = 0; i < 16; ++i)
+      if(requirements[i] > components[i])
+        ++waiting[i].second
+        while(requirements[i] > components[i])
+          waiting[i].first.wait()
+        --waiting[i].second
+      components[i] -= requirements[i]
+  }
+}
+
+1) Non ci puo' essere deadlock poiche' l'unica relazione di dipendenza e' quella
+   che lega gli operai in attesa ai magazzinieri. I magazzinieri saranno sempre
+   in grado di riempire il magazzino e dunque prima o poi i processi in attesa
+   verranno sbloccati.
+
+2) Non ci puo' essere starvation poiche' i processi richiedenti lasciano subito
+   la critical section quando si bloccano, dunque prima o poi terminereanno di
+   richiedere risorse e sara' possibile per i magazzinieri sbloccare la coda e
+   rifornire il magazzino.

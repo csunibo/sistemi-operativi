@@ -1,0 +1,34 @@
+// assumo il codice del client aspetti un ACK dopo aver passato
+// il messaggio che si desidera stampare. Questo e' necessario
+// affinche' tutti i processi server lo ricevano e si possa
+// evitare la doppia stampa anche quando si invia lo stesso messaggio
+// a server diversi.
+
+// per far si che messaggi identici ma inviati da client diversi vengano
+// stampati piu' volte si potrebbe tenere una mappa di (string, pid) anzi
+// per il controllo della duplicazione.
+server_pids = [pid_0, ..., pid_{n-1}];
+
+process client[msg] {
+  asend((0, 0, get_pid(), msg), server[rand()%n]);
+  _ = arecieve(ANY);
+}
+
+process server[i=0..n-1] {
+  Set<String> strings;
+
+  while(1) {
+    (type, start, pid, data) = arecieve(ANY);
+    if(!type && strings.contains(data))
+      continue;
+    if(!type && !start)
+      start = i // = get_pid()
+
+    strings.add(data);
+    if(type && i == start-1) {
+      print(data);
+      asend(0, pid); // ACK
+    } else if(type)
+      asend((type, start, pid, data), server_pids[(i+1)%n]);
+  }
+}

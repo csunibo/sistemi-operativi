@@ -1,0 +1,68 @@
+### put (1)
+writing=1
+wait on read
+
+### put (2)
+writing=2
+wait on read
+
+### get (3)
+reading=1
+unblock 1
+--- put (1)
+writing=1
+d=data
+signal on write (nothing)
+--- back to get (3)
+reading=0
+return d
+
+
+monitor Mon<T> {
+  condition read, write;
+  int reading, writing = 0, 0;
+  T d;
+
+  procedure entry put(T data) {
+    ++writing;
+    if(reading <= 0)
+      read.wait();
+    --writing;
+
+    d = data;
+    repeat(reading)
+      write.signal()
+  }
+
+  procedure entry T get() {
+    ++reading;
+    if(writing <= 0)
+      write.wait();
+    else
+      read.signal()
+    --reading;
+
+    return d;
+  }
+}
+
+# test diverso. 2 get 1 put
+
+### get (1)
+reading=1
+wait on write
+
+### get (2)
+reading=2
+wait on write
+
+### put (3)
+writing=1
+writing=0
+d=data
+unblock write
+--- get (1)
+return d
+unblock write
+--- get (2)
+return d

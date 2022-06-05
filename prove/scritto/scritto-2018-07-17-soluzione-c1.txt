@@ -1,0 +1,39 @@
+monitor Delirium<T> {
+  condition hasEmptied;
+  T emptied;
+
+  Map<T, int> capacities = {...0...};
+  Map<T, (condition, int)> waitingBartenders;
+  Map<T, bool> isBeingFilled = {...false...};
+  
+  void pour(T type, int quantity) {
+    int diff = quantity - capacities[type]
+    bool filled = quantity < capacities[type]
+    capacities[type] -= min(quantity, capacities[type])
+    if(capacities[type] == 0) {
+      emptied = type;
+      if(!isBeingFilled[type]) {
+        isBeingFilled[type] = true;
+        hasEmptied.signal();
+      }
+    }
+
+    if(!filled) {
+      waitingBartenders[type].first.wait()
+      capabilities[type] -= diff
+    }
+  }
+
+  T isempty() {
+    hasEmptied.wait();
+    return emptied;
+  }
+
+  void loaded(T type, int cap) {
+    isBeingFilled[type] = false
+    capacities[type] += cap;
+    cnd, n = waitingBartenders[type];
+    repeat(n)
+      cnd.signal()
+  }
+}

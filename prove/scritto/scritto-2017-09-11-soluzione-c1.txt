@@ -1,0 +1,27 @@
+enum direction {
+  N = 0, E = 1, S = 2, W = 3
+}
+
+monitor crossing {
+  bool busy = false;
+  int waiting[4] = {0,0,0,0};
+  condition go[4];
+
+  procedure entry enter(direction d) {
+    if(busy)
+      waiting[d]++;
+      go[d].wait()
+      waiting[d]--;
+
+    busy = true;
+  }
+
+  procedure entry exit(direction d) {
+    busy = false;
+    next = {d+1%4, d+2%4, d+3%4, d}
+    for dir in next:
+      if waiting[dir] > 0:
+        go[dir].signal();
+        break;
+  }
+}

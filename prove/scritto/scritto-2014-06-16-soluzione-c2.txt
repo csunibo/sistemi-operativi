@@ -1,0 +1,32 @@
+HashMap<(pid_t, pid_t), Semaphore> waiting;
+HashMap<(pid_t, pid_t), Queue<msg>> msg_queue;
+
+BinarySemaphore mutex;
+
+void asend(msg m, pid_t dst) {
+  mutex.P()
+  key = (getpid(), dst)
+  if(!msg_queue.has(key))
+    msg_queue.add(key, new Queue<msg>())
+
+  msg_queue.get(key).enqueue(m)
+  if(waiting.has(key))
+    waiting.get(key).V()
+  else
+    mutex.V()
+}
+
+msg arecv(pid_t sender) {
+  mutex.P()
+  key = (sender, getpid())
+  if(!msg_queue.has(key))
+    Semaphore sem = new Semaphore(0)
+    waiting.insert(key, sem)
+    mutex.V()
+    sem.P()
+    waiting.remove(key)
+
+  msg m = msg_queue.get(key).dequeue()
+  mutex.V()
+  return m
+}

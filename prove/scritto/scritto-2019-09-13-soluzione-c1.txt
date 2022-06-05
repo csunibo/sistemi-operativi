@@ -1,0 +1,36 @@
+monitor mbuf<T> {
+  Queue<(int, T, condition, condition)> data;
+  condition canWrite, canRead;
+  int waitingr = 0;
+
+  procedure entry void add(T data, int n) {
+    if(data.size() >= MAXELEM-1):
+      canWrite.wait();
+    
+    cndition cnd = new condition;
+    data.enqueue((n, data, new condition, cnd))
+    int called = 0;
+    while(waitingr > 0 && called++ < n)
+      canRead.signal()
+    cnd.wait()
+  }
+  
+  procedure entry type get() {
+    while(data.empty())
+      ++waitingr;
+      canRead.wait();
+      --waitingr;
+
+    (n, data, rdcnd, wrcnd) = data.head();
+    if(--n > 0): // assumo --n modifichi anche il dato all'interno della struttura
+      rdcnd.wait()
+      rdcnd.signal()
+    else
+      data.dequeue();
+      rdcnd.signal();
+      wrcnd.signal();
+      canWrite.signal();
+
+    return data
+  }
+}

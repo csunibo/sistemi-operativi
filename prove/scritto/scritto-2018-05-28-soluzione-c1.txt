@@ -1,0 +1,28 @@
+monitor riempisvuota {
+
+  int in = 0;
+  condition waitEnter;
+
+  int waiting = 0;
+  (condition) waitExit[MAX];
+
+  riempisvuota() {
+  }
+
+  procedure entry entra(pid_t p) {
+    if(in >= MAX)
+      waitEnter.wait();
+    ++in;
+  }
+
+  procedure entry esci(pid_t p) {
+    if(++waitingExit < MAX)
+      waitExit[waiting].wait()
+
+    // i would be the MAX-th process to wait for exit or i've
+    // been unlocked by the previous process in the queue.
+
+    waitExit[p-1]
+    --in;
+  }
+}

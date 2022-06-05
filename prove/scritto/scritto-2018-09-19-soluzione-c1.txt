@@ -1,0 +1,35 @@
+monitor dispatch {
+  airport_code cart_pos = BLQ;
+  condition cart_at[airport_code_length];
+  condition empty_at[airport_code_length];
+
+  KeydList<airport_code, string> l; // analoga a HashMap<airport_code, Queue<string>>
+  condition unloaded;
+
+
+  procedure entry void load(airtport_code dst, string owner) {
+    if(l.size() >= MAX)
+      unloaded.wait()
+
+    l.get(dst).enqueue(owner)
+  }
+
+  procedure entry void cartat(airport_code cd) {
+    if(l.get(cart_pos).empty())
+      empty_at[cart_pos].wait()
+
+    cart_pos = cd
+    cart_at[cd].signal()
+  }
+
+  procedure entry unload(airtport_code dst) {
+    if(cart_pos != dst)
+      cart_at[dst].wait()
+
+    if(!l.get(dst).empty())
+      unloaded.signal()
+      return l.get(dst).dequeue()
+    else
+      empty_at[dst].signal()
+  }
+}

@@ -1,0 +1,24 @@
+monitor monobinario {
+  int value;
+  int blockedCount = 0;
+  condition block;
+
+  monobinario(int v) {
+    value = v;
+  }
+
+  monoP() {
+    if(value == 0){ 
+      ++blockedCount;
+      block.wait();
+    }else
+      value = 0;
+  }
+
+  monoV() {
+    if(value == 0 && blockedCount >= 1)
+      block.signal()
+    else
+      value = 1;
+  }
+}
