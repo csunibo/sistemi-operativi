@@ -6,7 +6,7 @@
 #include <string.h>
 #include <sys/types.h>
 
-#define MAX 512
+#define MAX 51200
 ino_t inode_array[MAX];
 size_t pos = 0;
 
