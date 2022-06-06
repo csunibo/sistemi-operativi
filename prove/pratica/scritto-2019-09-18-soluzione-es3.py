@@ -1,21 +1,18 @@
-#!/bin/env python3
-import sys
-import os
+#!/usr/bin/env python3
 
-f = {}
+import os, sys
 
-for root, _, files in os.walk(sys.argv[1]):
-    for file in files:
-        fp = os.path.abspath(os.path.join(root, file))
-        key = fp if not os.path.islink(fp) else os.path.realpath(fp)
-        if key in f:
-            f[key].append(fp)
+data = {}
+
+for dirpath, _, filenames in os.walk(sys.argv[1]):
+    for filename in filenames:
+        path = os.path.join(dirpath, filename)
+        ino = os.lstat(path).st_ino
+        if ino in data:
+            data[ino].append(path)
         else:
-            f[key] = [fp]
+            data[ino] = [path]
 
-for key in f:
-    if len(f[key]) > 1:
-        for file in f[key]:
-            print(os.path.relpath(file, os.path.join(sys.argv[1],'..'))+' ', end='')
-        print('\n', end='')
-
+for value in data.values():
+    if len(value) > 1:
+        print(*value)
