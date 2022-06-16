@@ -1,0 +1,955 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage[italian]{babel}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{listings}
+\usepackage[hidelinks]{hyperref}
+\usepackage[Algoritmo]{algorithm}
+\usepackage{algpseudocode}
+
+\algblockdefx[monitor]{Monitor}{EndMonitor}[1]{\textbf{monitor} \textsc{#1}}{\textbf{end monitor}}
+\algblockdefx[entry]{ProcedureEntry}{EndProcedureEntry}[2]{\textbf{procedure entry} \textsc{#1}(#2)}{\textbf{end procedure}}
+
+\title{\textsc{Programmazione Concorrente}}
+\author{Luca Tagliavini}
+
+\begin{document}
+\maketitle
+\tableofcontents
+\pagebreak
+
+\section{Introduzione}
+
+Fino ad ora abbiamo scritto programmi sequenziali imperativi, nella
+quale si ha una sola istanza del nostro codice che viene eseguita istruzione
+dopo istruzione, in modo ordinato.
+I programmi interagiscono con il sistema operativo tramite \emph{system call}.
+Molte chiamate sono incluse nello standard \verb!POSIX! e ne consentono la
+portabilit\`a tra sistemi operativi che implementano tale specifica.
+
+La programmazione concorrente viene trattata nel corso di sistemi operativi poich\`e
+la gestione concorrente dei processi \`e uno dei compiti che un SO deve svolgere,
+ed \`e dunque integrale sapere quali siano le sfide derivanti da questa programmazione.
+Un programma concorrente \`e un software che svolge pi\`u cose \emph{contemporaneamente}.
+Al fine di comprendere questi programmi occorre che essi siano modellati, per poterli
+comprendere e implementare. \`E inoltre necessario introdurre il concetto astratto di
+processo, che non combacia mai con il programma stesso.
+
+\subsection{Processo}
+
+Un processo \`e semplicemente un programma in esecuzione. Esso svolge una serie di
+passi di avanzamento, che lo portano da uno \emph{stato} ad uno successivo. Nella
+programmazione imperativa \`e chiaro che il nostro software esegue una istruzione
+alla volta avanzando passo a passo.
+
+Un processo pu\`o essere visto come la memoria e le risorse ad esso allocate,
+come i dati contenuti da esso nei registri del processore ma anche come lo stato
+di esecuzione in cui si trova. A noi interesser\`a una visione pi\`u astratta,
+ignorando queste rappresentazione fisiche e parlando di un processo come una
+semplice istanza di esecuzione.
+
+\subsection{Assioma del Finite Progress}
+
+Questo assioma ci assicura che \emph{ogni processo \textbf{non bloccato} prima o poi avanza}.
+In altro modo: ogni processo viene eseguito ad una velocit\`a finita \emph{non nulla},
+ma sconosciuta.
+
+Senza questo assioma anche un programma semplicissimo come la
+stampa di \verb!HelloWorld! potrebbe non terminare mai poich\`e non avanza
+mai fino all'ultima istruzione.
+
+\subsection{Parallelismo}
+
+Il parallelismo, ovvero l'esecuzione di pi\`u compiti contemporaneamente, \`e di due tipi:
+reale e apparente. In quello \emph{reale} si possono avere pi\`u macchine, pi\`u \emph{core} del
+processore che collaborano tra di loro e dove si hanno in un dato istante due istanze del
+programma che eseguono istruzioni diverse (\textbf{overlapping}). Nel parallelismo \emph{apparente} si ha un maggior
+numero di processi in esecuzione rispetto agli effettivi chip paralleli a disposizione:
+in un dato istante di tempo si hanno solo $n$ processi in esecuzione, pari al numero di core
+paralleli a disposizione, tuttavia molti pi\`u software possono essere aperti contemporanemante
+e tutti si alternano a turni per sfruttare il tempo di calcolo (\textbf{interlapping}). All'umano che osserva appare
+come se i processi stiano avanzando nello stesso momento, tuttavia stanno in realt\`a facendo
+a turno molto velocemente.
+
+Le sfide del paradigma della programmazione concorrente saranno la comunicazione
+e la sincronizzazione tra processi.
+
+\begin{quote}
+  Nella pratica si usa la parola \emph{processo} qunado si parla di esecuzioni
+  che non condividono memoria, mentre \emph{thread} per indicare istanze che
+  la condividono tra di loro.
+\end{quote}
+
+\subsection{Prime problematiche}
+
+Si pensi ad una semplice funzione che somma o sottrae ad una variabile $count$ un valore $x$.
+Se immaginiamo esistano due istanze del programma che condividono la stessa cella di memoria
+per il valore $count$, esistono vari stati finali dati dall'esecuzione di un programma $+10$
+e $-10$. \`E importante ricordarsi che ogni programma \`e composto da tre istruzioni separate:
+\begin{enumerate}
+  \item \textbf{lettura} del dato $count$ dalla memoria in un registro.
+  \item \textbf{aggiornamento} del valore nel registro tramite incremento o decremento.
+  \item \textbf{scrittura} del valore del registro nella memoria in posizione $count$.
+\end{enumerate}
+Eseguendo le due istanze in parallello le istruzioni sono redistribuite nel tempo in ordine
+non garantito, e dunque possono avvenire errori di calcolo e discrepanze, dovute alla modifica
+concorrente di una variabile condivisa in memoria. Dunque pu\`o capitare che un processo
+sovrascrive la computazione svolta dall'altra controparte.
+
+In un sistema concorrente una computazione che dipende dall'ordine casuale in
+cui vengono eseguite pi\`u computazioni parallele vengono chiamate \textbf{race
+condition}. Vogliamo evitare a tutti i costi questi avvenimenti in quanto
+rendono il programma non-deterministico.
+
+\subsection{Interazioni tra processi}
+
+\`E possibile classificare i processi in base a quanto sono \emph{consapevoli}
+tra di loro:
+\begin{enumerate}
+  \item \textbf{Ignari}: processi che sono completamente ignari dell'esistenza
+    altrui competono (concorrenza) per l'accesso alle risorse e devono dunque
+    avere un modo di \emph{sincronizzarsi} (offerto dal sistema operativo).
+  \item \textbf{Indirettamente comunicanti}: che non conoscono il PID altrui
+    ma comunicano tramite una risorsa che posseggono in comune (un buffer ad
+    esempio).
+  \item \textbf{Direttamente comunicanti}: hanno una comunicazione diretta
+    per mezzo dei loro ID offerta dal sistema operativo. La comunicazione
+    avviene spesso tramite lo scambio di messaggi.
+\end{enumerate}
+
+\subsection{Iniziamo a risolvere il problema}
+
+Per risolvere il problema della sincronizzazione di due processi concorrenti \`e essenziale
+capire \textbf{quali} sono operazioni \emph{atomiche}, inscindibili, e dunque operazioni nelle quali
+non pu\`o avvenire una discrepanza dovuta alla modifica dei dati da un agente terzo durante
+la computazione.
+
+Noi vorremmo che le operazioni critiche diventassero \emph{atomiche}, ovvero che le operazioni
+vengano eseguite in \emph{mutua esclusione}. Questa funzionalit\`a non \`e offerta dal processore,
+ma deve essere implementata lato software.
+
+\subsection{Azioni atomiche (di sistema)}
+
+Alcune operazioni di sistema sono gi\`a atomiche di natura. Ad esempio, operazioni che
+vengono svolte con una sola istruzione sono atomiche per propriet\`a hardware.
+In un contesto di parallelismo reale questa propriet\`a viene garantita dall'
+hardware che garantisce l'indipendenza dei \emph{core}. Nel parallelismo
+apparente l'avvicendamento dei due processi, \emph{context switch}, avviene prima
+e dopo l'operazione atomica il che ne preserva le propriet\`a (non interferisce).
+
+In seguito useremo la sintassi \verb!<S>! per indicare che una operazione dev'essere
+eseguita in modo atomico.
+
+\subsection{Propriet\`a comuni}
+
+Esistono alcune propriet\`a comuni ai programmi concorrenti:
+\begin{itemize}
+  \item \textbf{safety}: non succeder\`a qualcosa di male.
+  \item \textbf{liveness}: succeder\`a qualcosa di buono (non si va in loop infinito).
+\end{itemize}
+
+\`E importante svolgere i pezzi \emph{critici} del programma, quelli che possono
+andare in conflitto con altri processi, in una \emph{critical section}. Vorremo dunque
+prefissare e suffissare queste operazioni con l'entrata e l'uscita nella \emph{sezione critica}.
+In questa sezione critica saranno rispettate le seguenti regole: \textbf{mutua esclusione}
+(liveness), \textbf{no deadlock}, \textbf{no ritardi} (non necessari), \textbf{no starvation}.
+
+\subsubsection{Deadlock (safety)}
+
+Il principio dell'\emph{deadlock} pu\`o essere espresso con il seguente esempio:
+abbiamo due risorse $a$ e $b$ a cui due processi vogliono accedere in maniera
+\emph{esclusiva}. Se il primo vuole prendere $a$ poi $b$ e il secondo $b$ poi $a$,
+e si parte prendendo uno $a$ e l'altro $b$, nessuno riuscir\`a mai a scambiarsi
+il possesso, e ci sar\`a dunque un blocco infinito (ci si blocca a vicenda).
+
+\subsubsection{Starvation e ritardi (liveness)}
+
+La starvation \`e la situazione in cui altri processi approfittano di tutte le
+risorse e dunque un processo interessato viene bloccato per l'avidit\`a altrui.
+Il processo in un certo senso \emph{muore di fame} (trad. let.) per carenza di risorse.
+
+Inserendo ritardi superflui \`e un modo analogo per rubare tempo ad altri
+processi e generare una problematica analoga a quella della starvation.
+
+\subsection{Sezioni critiche}
+
+Useremo la sintassi \verb![enter cs]! e \verb![exit cs]! per aprire e chiudere
+un "blocco" del programma denominata \emph{sezione critica} che deve dunque
+essere eseguita in mutua esclusione e rispettando le propriet\`a elencate in
+precedenza.
+
+Programmi diversi hanno bisogno di sezioni critiche diverse in base alle risorse
+a cui fanno accesso e come le usano. Perci\`o non si pu\`o semplicemente delegare
+questo compito al Sistema Operativo. C'\`e bisogno che il programmatore usi il
+proprio intelleto per trvoare la soluzione pi\`u adatta al problema di
+concorrenza sotto esame.
+
+\section{Approccio di Dekker e Peterson}
+
+Seguiremo la stessa introduzione all'algoritmo di Dekker (pubblicato da Dijkstra)
+offerta nell'articolo della pubblicazione originale.
+
+Vedremo in seguito la versione di Peterson che \`e pi\`u semplice da
+implementare e da generalizzare per pi\`u processi.
+
+\subsection{Primo tentativo}
+
+Si pu\`o usare la tecnica denominata \emph{busy wait} nella quale si tiene una
+variabile condivisa $turn$ che pu\`o essere impostata a $1$ quando esso entra
+nella sezione critica, a $0$ quando lo fa l'altro processo. La mutua esclusione
+\`e trivialmente garantita, cos\`i come l'assenza di deadlock, tuttavia si spreca
+tempo ad aspettare inutilmente.
+
+\subsection{Secondo tentativo}
+
+Si possono allora usare due variabili \emph{readonly} $c_i$ all'esterno che
+indicano se il processo $i$ \`e nella critical section. Tuttavia si pu\`o
+verificare che entrambi i processi arrivano al controllo per vedere se la
+controparte \`e libera, entrambi vedono $false$ e dunque entrano entrambi,
+contemporaneamente, nella critical section, violando la \emph{mutua esclusione}.
+
+\subsection{Terzo tentativo}
+
+Allora possiamo riproporre il tentativo precedente ma nel quale i processi
+si appropriano prima del controllo del lock. In questo modo tuttavia si pu\`o
+avere che entrambi bloccano la risorsa e aspettano per l'altro che la liberi, ma
+ci\`o non accadr\`a mai poich\`e stanno aspettando l'uno la mossa dell'altro.
+Si ha dunque un \emph{deadlock}.
+
+Si pu\`o anche provare una variante di questo approccio che blocca la risorsa ma
+se vede che l'altro la sta usando la sblocca e riprova, tuttavia si arriva sempre
+ad un deadlock se i processi venogno eseguiti perfettamente all'unisono (molto raro).
+
+\subsection{Soluzione di Dekker}
+
+La soluzione pensata da Dekker, consiste nel combinare il tentativo $3.b$ ma
+usare solo nel caso in cui ci si trovi in stallo si usa la tecnica della
+soluzione $1$.
+
+\begin{algorithm}[H]
+  \caption{Dekker}
+  \begin{algorithmic}[0]
+    \State $turn \gets 0$
+    \State $needs_i \gets \{false, \ldots, false\}$
+    \Procedure {DekkerProcess}{$i$}
+      \While{$true$}
+        \State $needs_i \gets true$
+        \While{$\exists i. \, needs_i$}
+          \If{$turn \neq i$}
+            \State $prev \gets turn$
+            \State $needs_i \gets false$
+            \While{$turn \neq prev$}
+            \EndWhile
+            \State $needs_i \gets true$
+          \EndIf
+        \EndWhile
+        \State $\ldots$
+        \Comment{Critical section}
+        \State $needs_p \gets false$
+        \State $turn \gets i+1$
+      \EndWhile
+    \EndProcedure
+  \end{algorithmic}
+\end{algorithm}
+
+\subsubsection{Prova di correttezza}
+
+Assumiamo per assurdo che due processi $P$ e $Q$ siano contemporanemanete nella
+critical section. Poich\`e gli accessi in memoria sono esclusivi e per entrare
+devono camiare la variabile $need_i$. Allora supponiamo sia entrato per prima
+$Q$ allora $needs_Q$ sar\`a $true$ fino a quando $Q$ non uscir\`a dal ciclo.
+Poich\`e $P$ entra nella critical section mentre $Q$ lo \`e gi\`a significa che
+c'\`e un istante di tempo in cui $needs_Q$ \`e false, il che \`e assurdo. \qed
+
+Le altre propriet\`a possono essere mostrate trivialmente in modo analogo.
+
+\subsection{Algoritmo di peterson}
+
+\begin{algorithm}[H]
+  \caption{Peterson}
+  \begin{algorithmic}[0]
+    \State $turn \gets 0$
+    \State $needs_i \gets \{false, \ldots, false\}$
+    \Procedure {PetersonProcess}{$i$}
+      \While{$true$}
+        \State $needs_i \gets true$
+        \State $turn \gets i$
+        \While{$(\exists i \;\; needs_i) \wedge turn \neq i$}
+        \EndWhile
+        \State $\ldots$
+        \Comment{Critical section}
+        \State $needs_p \gets false$
+      \EndWhile
+    \EndProcedure
+  \end{algorithmic}
+\end{algorithm}
+
+\subsubsection{Prova di correttezza}
+
+\begin{enumerate}
+  \item \textbf{Mutua esclusione}: supponiamo che $1$ sia nella sezione critica
+    e vogliamo provare che $2$ non pu\`o entrare. Poich\`e $1$ \`e dentro sappiamo
+    che $needs_1 = true$ e sappiamo che $2$ entra solo quando $turn = 2$. \\
+    Valutiamo lo stato al momento in cui $1$ entra nella critical section;
+    abbiamo due possibilit\`a:
+    \begin{itemize}
+      \item $needs_2 = false$ allora $2$ dovr\`a ancora eseguire $needs_2 = true$
+        e dunque lo far\`a dopo $1$ impedendosi di entrare.
+      \item $turn = 1$ analogo a prima, si preclude l'entrata.
+    \end{itemize}
+    \qed
+  \item \textbf{Assenza di deadlock}: Supponiamo per assurdo che $1$ voglia
+    entrare nella critical section ma rimanga bloccato nel while. Allora
+    valgono le seguenti invarianti:
+    \begin{align*}
+      needs_1 = ture \quad needs_2 = true \quad turn = 2
+    \end{align*}
+    Ci sono allora tre possibili casi:
+    \begin{itemize}
+      \item $2$ vuole entrare nella critical section: impossibile visto che $needs_2 = true$
+      \item $2$ \`e bloccato nel suo while: impossibile visto che $turn = 2$
+      \item $2$ \`e nella CS e ne esce: impossibile poich\`e allora $needs_2 = false$
+        e si uscirebbe dal deadlock.
+    \end{itemize}
+    Abbiamo provato l'assurdo. \qed
+\end{enumerate}
+
+\section{Soluzioni hardware}
+
+Le soluzioni software di Peterson e Dekker per quanto corrette e rispettose delle
+propriet\`a necessarie, sono tutte basate sul \emph{busy waiting}. Con questa
+tecnica vengono spcreate preziose risorse e tempo per calcoli di attesa.
+Bisognerebbe dunque implementare qualcosa a livello hardware affinch\`e non si
+sprechi tempo con soluzoni a lato software.
+
+\subsection{Stop degli interrupt}
+
+Per i processori single core \`e semplice la soluzione: lo \emph{stop degli
+interrupt}. L'esecuzione lineare di un processore pu\`o essere interrotta solo
+da interrupt esterni. Bloccandoli quando si entra nella critical section basta
+dunque disabilitare gli interrupt e l'atomicit\`a \`e garantita.
+
+Questa tecnica tuttavia \`e limitata solo a hardware mono-processore e pu\`o
+essere usata in modo maligno da programmi che hanno intenzione di bloccare il
+sistema interrompendo la ricezione dei segnali esterni.
+La tecnica viene tuttavia sfruttata a basso livello dai sistemi opeartivi che
+offrono ai programmi \emph{userspace} una tecnica \emph{sicura} per creare
+critical section che sono gestite dal sistema operativo stesso.
+
+\subsection{Test and Set}
+
+Una comune soluzione hardware al problema offerta da tutti i processori moderni
+\`e l'istruzione speciale \emph{test-and-set} che svolge in modo \emph{atomico}
+le due operazioni di lettura e scrittura in una locazione di memoria. In tal
+modo un programma concorrente che vuole entrare nella sezione critica tenta di
+impostare il lock a $1$ per se stesso ma fallisce se esso \`e gi\`a stato preso
+da altri processi. In questo modo si continua a fare \emph{busy waiting} ma 
+l'approccio \`e molto pi\`u pulito e si sprecano meno risorse usando una
+istruzione singola.
+
+Esistono altre istruzioni analoghe come \emph{fetch-and-set}, \emph{compare-and-swap}, etc.
+
+\subsubsection{Comunque un miglioramento}
+
+L'implementazione hardware \`e in generale pi\`u pulita, in cui basta una sola
+variabile per la creazione della sezione critica e veloce, tuttavia si usa
+ancora il busy waiting e bisogna ancora impiegare misure per constrastare la
+starvation che aggiungono complessit\`a.
+
+La soluzione attualmente pi\`u usata \`e dunque astrarre queste problematiche
+delegando la creazione della critical section al sistema operativo e alleggerendo
+il carico sul programmatore userspace.
+
+\section{Semafori}
+
+I semafori sono il meccanismo pricinpale dei sistemi operativi per la
+sincronizzazione degli accessi ad una risorsa condivisa (l'area dell'incrocio
+nella metafora) introdotti negli anni 60 da Dijkstra.
+
+L'idea \`e che due processi possano essere bloccati durante l'esecuzione a
+vicenda nell'attesa di un segnale dalla controparte.
+Formalmente un semaforo \`e un \emph{dato astratto} su cui sono disponibili due
+operazioni:
+\begin{itemize}
+  \item $v$ dall'olandese \emph{verhogen} tramite la quale si invia un segnale per
+    indicare il verificarsi di un evento o il rilascio di una risorsa.
+  \item $p$ dall'olandese \emph{proberen} tramite il quale ci si ferma ad
+    aspettare un segnale e dunque si attende la liberazione di una risorsa o la
+    ricezione di un evento.
+\end{itemize}
+
+Nell'implementazione canonica il semaforo contiene un valore \emph{intero non
+negativo}. La funzione $v$ incrementa il valore del semaforo, $p$ attende che il
+semaforo sia strettamente positivo e ne decrementa il valore.
+
+\subsection{Invarianti}
+
+Chiamiamo
+\begin{itemize}
+  \item $n_p$ il numero di operazioni $p$ completate
+  \item $n_v$ il numero di operazioni $v$ completate
+  \item $init$ il numero iniziale del semaforo
+\end{itemize}
+
+Allora abbiamo le seguenti invarianti:
+\begin{enumerate}
+  \item $n_p \leq n_v + init$, ovvero il valore del semaforo \`e pari a $init + n_v - n_p$.
+  \item Ci sono due possibili modalit\`a di utilizzo:
+    \begin{enumerate}
+      \item con $init = 0$ siamo in modalit\`a \textbf{eventi}: il numero di eventi
+        consegnati non deve superare il numero di volte che l'evento si \`e verificato.
+      \item con $init > 0$ siamo in modalit\`a \textbf{risorse}: il numero di risorse
+        soddisfatte non deve essere superiore al numero di risorse + il numero
+        di risorse restituite.
+    \end{enumerate}
+\end{enumerate}
+
+\subsection{Propriet\`a soddisfatte}
+
+Sono banalmente soddisfatte le propriet\`a di mutua esclusione e assenza di
+ritardi non necessari tramite la definizione di semaforo. L'assenza di deadlock
+\`e facilmente dimstrabile, tuttavia spetta all'implementazione garantire
+\textbf{l'assenza della starvation}.
+
+\subsection{Rimozione della starvation}
+
+Per garantire questa propriet\`a vengono utilizzati i semafori cosidetti \emph{fair},
+ossia equi, giusti. Questi semafori inseriscono i processi in attesa in una coda
+FIFO (\emph{first in, first out}) e dunque il processo che \`e in attesa da pi\`u
+tempo sar\`a anche il primo ad essere liberato dall'attesa. In questo modo tutti
+i processi saranno prima o poi liberati dal lock.
+
+\subsection{Implementazione}\label{sem}
+
+\begin{algorithm}[H]
+  \caption{Semafori}
+  \begin{algorithmic}[0]
+    \Procedure {Semaphore}{val}
+      \State $value \gets \max \{val, 0\}$
+    \EndProcedure
+    \State
+    \Procedure {P}{}
+      \If{$value > 0$}
+        \State $value \gets value - 1$
+      \Else
+        \State $pid \gets id \text{ of the caller}$
+        \State $queue \gets pid$
+        \State $suspend(pid)$
+      \EndIf
+    \EndProcedure
+    \State
+    \Procedure {V}{}
+      \If{$queue$ is empty}
+        \State $value \gets value + 1$
+      \Else
+        \State $pid \gets queue$
+        \State $wakeup(pid)$
+      \EndIf
+
+    \EndProcedure
+  \end{algorithmic}
+\end{algorithm}
+
+Il corpi di queste procedure devono essere inseriti all'interno di una critical
+section in qunato fanno accesso alla queue che \`e una risorsa condivisa tra pi\`u
+processi e processori.
+
+\subsection{Busy waiting}
+
+Poich\`e si ha comunque bisogno di una ciritcal section per implementare le
+funzionalit\`a del semaforo si ha comunque il \emph{busy waiting}, tuttavia \textbf{se
+ne limitano limita} l'utilizzo. Esso \`e ristretto alle sezioni critiche di \textsc{P}
+e \textsc{V} che sono molto brevi rispetto all'intero blocco della critical section
+di tutti i programmi (che avrebbero tenuto il resto del sistema in busy waiting
+altrimenti).
+
+\subsection{Semafori binari}
+
+Un sottoinsieme dei semafori generali \`e quello dei \textbf{semafori binari}.
+Queste strutture possono solo assumere valori binari, e l'operazione \textsc{V}
+su una struttura contentente gi\`a $1$ causa un errore secondo alcuni testi.
+La variante aggiornata \`e dunque: $0 \leq init + n_v - n_p \leq 1$
+
+\subsubsection{Semafori binari usando semafori generali}
+
+\begin{algorithm}[H]
+  \caption{Semafori binari}
+  \begin{algorithmic}[0]
+    \Procedure {Semaphore}{init}
+      \State $init \gets \max \{ \min \{ init, 1 \}, 0 \}$
+      \Comment{sanitize $init \in \{0,1\}$}
+      \State $s_0, s_1 \gets \textsc{Semaphore}(init), \textsc{Semaphore}(1-init)$
+    \EndProcedure
+    \State
+    \Procedure {P}{}
+      \State call \textsc{P} on $s_o$
+      \State call \textsc{V} on $s_1$
+    \EndProcedure
+    \State
+    \Procedure {V}{}
+      \State call \textsc{P} on $s_1$
+      \State call \textsc{V} on $s_0$
+    \EndProcedure
+  \end{algorithmic}
+\end{algorithm}
+
+\subsection{Semafori generali tramite semafori binari}
+
+Possiamo ora implementare una classe semaforo generico utilizzando i semafori
+binari per la critical section dei semafori visti nella \autoref{sem}. Il resto
+del codice per i metodi \textsc{P} e \textsc{V} \`e pressoch\`e analogo.
+
+Useremo dunque un semaforo binario come \emph{mutex} per gestire la critical
+section dell'implementazione, e creeremo poi un semaforo allocato dinamicamente
+per ogni processo che sfrutta il nuovo semaforo generale.
+
+\section{Soluzione di problemi}
+
+Siamo ora pronti a poter risolvere problemi pratici, creati ad arte, con gli
+strumenti che ci vengono offerti dai semafori.
+
+\subsection{Produttore/Cosumatore}
+
+Esiste un processo detto \texttt{produttore} che vuole trasmettere dei dati ad
+un altro processo detto \texttt{consumatore} che li consuma. I due comunicano
+tramite una sola variabile in memoria condivisa. Devono dunque coordinare le
+letture/scritture in modo da non generare \emph{race condition}.
+
+Bisogna inoltre garantire che il produttore non scriva prima della lettura del
+consumatore e viceversa, ovvero che il consumatore non legga due volte prima
+che il produttore abbia aggiornato il valore in uscita.
+
+\begin{algorithm}[H]
+  \caption{Produttore/Consumatore}
+  \begin{algorithmic}[0]
+    \State $buf \gets null$
+    \State $empty, full \gets \textsc{Semaphore}(1), \textsc{Semaphore}(0)$
+    \State
+    \Procedure {Producer}{}
+      \While{$true$}
+        \State $val \gets \textsc{Produce}()$
+        \State call \textsc{P} on $empty$
+        \State $buf \gets val$
+        \State call \textsc{V} on $full$
+      \EndWhile
+    \EndProcedure
+    \State
+    \Procedure {Consumer}{}
+      \While{$true$}
+        \State call \textsc{P} on $full$
+        \State $val \gets buf$
+        \State call \textsc{V} on $empty$
+        \State \textsc{Consume}$(val)$
+      \EndWhile
+    \EndProcedure
+  \end{algorithmic}
+\end{algorithm}
+
+\subsubsection{Problema del buffer limitato}
+
+Si altera il problema del \emph{producer/consumer} imponendo che il dato
+scambiato sia un \emph{buffer} di dimensione limitata, nel quale non si devono
+dunque sovrascrivere i dati non ancora letti ne leggere i dati pi\`u volte.
+
+\begin{algorithm}[H]
+  \caption{Buffer limitato}
+  \begin{algorithmic}[0]
+    \State $q \gets \textsc{Queue}(size)$
+    \State $empty, full, mutex \gets \textsc{Semaphore}(size), \textsc{Semaphore}(0), \textsc{Semaphore}(1)$
+    \State
+    \Procedure {Producer}{}
+      \While{$true$}
+        \State $obj \gets \textsc{Produce}()$
+        \State call \textsc{P} on $empty$
+        \State call \textsc{P} on $mutex$
+        \State $q \gets val$
+        \State call \textsc{V} on $mutex$
+        \State call \textsc{V} on $full$
+      \EndWhile
+    \EndProcedure
+    \State
+    \Procedure {Consumer}{}
+      \While{$true$}
+        \State call \textsc{P} on $full$
+        \State call \textsc{P} on $mutex$
+        \State $val \gets q$
+        \State call \textsc{V} on $mutex$
+        \State call \textsc{V} on $empty$
+        \State \textsc{Consume}$(val)$
+      \EndWhile
+    \EndProcedure
+  \end{algorithmic}
+\end{algorithm}
+
+\subsection{Cena dei filosofi}
+
+Il problema viene narrato tramite una storiella: cinque filosofi si trovano ad
+una tavola rotonda per mangiare. Nella loro vita compiono solo due azioni:
+mangiano e dormono. Per mangiare hanno bisogno di \texttt{2} posate che vengono
+poi rilasciate quando egli va a dormire. Il testo mostra dunque la soluzione per
+assegnare una o pi\`u risorse a uno o pi\`u consumatori.
+
+Definendo le variabili:
+
+\begin{itemize}
+  \item $up_i$ indica il numero di volte che la bacchetta $i$ viene presa dal tavolo.
+  \item $down_i$ indica il numero di volte che la bacchetta $i$ viene appoggiata sul tavolo.
+\end{itemize}
+
+Sappiamo che vale per certo la seguente invariante: $down_i \leq up_i \leq down_i + 1$.
+Sappiamo dunque che il valore del semaforo binario $chopstick_i$ assume valore $1-up_i-down_i$.
+
+Si possono proporre una serie di soluzioni errate, avendo cura ad esempio di
+controllare se i proprio vicini stanno mangiando, o provando subito a
+prenotarsi per mangiare ma si incorre spesso in starvation. L'unica soluzione
+\`e quella di rompere la simmetria, facendo in modo che un filosofo sia mancino.
+
+% TODO
+
+\subsubsection{Lettori/Scrittori}
+\label{rw}
+
+Un database \`e condiviso tra un certo numero di processi, che si suddividono
+in due tipi: \texttt{lettori} e \texttt{scrittori}. Quando uno scrittore accede
+al database deve agire in \emph{mutua esclusione}, mentre quando nessuno sta
+scrivendo il numero di lettori pu\`o essere arbitrario.
+
+Questo esempio ci fa notare che mutua esclusione e condivisione possono
+coesistere per la stessa risorsa, e ci da una casistica in cui non sono singoli
+processi a comptere ma bens\`i \emph{calssi di processi}.
+
+Definiamo $nr$ il numero di lettori e $nw$ il numero di scrittori in un dato
+istante di tempo. Vale la seguente invariante:
+\begin{align*}
+  (nr \geq 0 \wedge nw = 0) \vee (nr = 0 \wedge nw = 1)
+\end{align*}
+Si noti che viene ammessa la situazione $nr = nw = 0$
+per il passaggio del controllo da lettori a scrittori o viceversa.
+
+Nel definire la soluzione bisogna decidere se dare la priorit\`a agli scrittori
+o ai lettori in caso di risorsa libera e entrambe le code piene.
+
+\begin{algorithm}[H]
+  \caption{Lettori/Scrittori}
+  \begin{algorithmic}[0]
+    \State $nr \gets 0$
+    \State $rw, mutex \gets \textsc{Semaphore}(1), \textsc{Semaphore}(1)$
+    \State
+    \Procedure {StartRead}{}
+      \State call \textsc{P} on $mutex$
+      \If{$nr = 0$}
+        \State call \textsc{P} on $rw$
+      \EndIf
+      \State $nr \gets nr + 1$
+      \State call \textsc{V} on $mutex$
+    \EndProcedure
+    \State
+    \Procedure {StartWrite}{}
+      \State call \textsc{P} on $rw$
+    \EndProcedure
+    \State
+    \Procedure {EndRead}{}
+      \State call \textsc{P} on $mutex$
+      \State $nr \gets nr - 1$
+      \If{$nr = 0$}
+        \State call \textsc{V} on $rw$
+      \EndIf
+      \State call \textsc{V} on $mutex$
+    \EndProcedure
+    \State
+    \Procedure {EndWrite}{}
+      \State call \textsc{V} on $rw$
+    \EndProcedure
+  \end{algorithmic}
+\end{algorithm}
+
+Questa soluzione da la precedenza ai lettori, i quali possono causare starvation,
+mentre gli scrittori dopo aver svolgo la loro azione rilasciano il controllo al
+prossimo attore sulla coda quindi non causeranno mai \emph{race condition}.
+
+\subsection{Andrews e l'await}
+
+Andrews da alcune definizioni preliminari per la sua opera:
+\begin{itemize}
+  \item $B$ \`e una condizione booleana
+  \item $S$ uno statement (istruzione)
+  \item $\langle S \rangle$ eseguire $S$ in modo dinamico
+  \item $\langle \textsc{Await}(B) \rightarrow S \rangle$ attendi fino a quando
+    la condizione $B$ \`e verificata e \emph{poi} esegui $S$. Il tutto viene
+    fatto in modo atomico e dunque quando $S$ viene eseguito $B$ \`e verificata.
+\end{itemize}
+
+Andrews suggerisce poi la seguente procedura per affrontare un problema di
+programmazione concorrente:
+\begin{enumerate}
+  \item \textbf{Definire il problema con precisione}: identificare i processi,
+    specificare i problemi di sincronizzazione, introdurre le variabili e le invarianti.
+  \item \textbf{Abbozzare una soluzione}: produrre uno schema di soluzione, e
+    identificare le situazioni in cui un accesso atomico o in mutua esclusione
+    \`e necessario.
+  \item \textbf{Garantire l'invariante}: verifica che l'invariante sia sempre
+    verificata.
+  \item \textbf{Implementare le azioni atomiche}: esplicitare le azioni atomiche
+    e le \textsc{Await} tramite le primitive di sincronizzazione disponibili.
+\end{enumerate}
+
+\subsection{Lettori/Scrittori secondo Andrews}
+
+\begin{itemize}
+  \item \textbf{Variabili}:
+    \begin{enumerate}
+      \item $nr$ il numero di lettori
+      \item $nw$ il numero di scrittori
+    \end{enumerate}
+  \item \textbf{Invariante}:
+    \begin{align*}
+      (nr \geq 0 \wedge nw = 0) \vee (nr = 0 \wedge nw = 1)
+    \end{align*}
+  \item \textbf{Schema di soluzione}:
+    \begin{algorithmic}[0]
+      \Procedure {Reader}{}
+        \State $\langle \textsc{Await}(nw = 0) \rightarrow nr \gets nr + 1 \rangle$
+        \State
+        \Comment{Read the database}
+        \State $\langle nr \gets nr - 1\rangle$
+      \EndProcedure
+      \State
+      \Procedure {Writer}{}
+        \State $\langle \textsc{Await}(nr = 0 \wedge nw = 0) \rightarrow nw \gets 1 \rangle$
+        \State
+        \Comment{Write the database}
+        \State $\langle nw \gets 0\rangle$
+      \EndProcedure
+    \end{algorithmic}
+\end{itemize}
+
+Useremo poi un \emph{mutex} per la mutua esclusione, un array di semafori $sem_i$
+per ogni condizione booleana $B_i$. Su questi semafori verranno messi in attesa
+i processi che attendono il verificarsi della condizione $B_i$. Avremo infinie un
+array di interi $waiting$ dove nella posizione $i$-esima ci sar\`a il contatore
+del numero di processi in attesa della condizione $B_i$.
+
+Tradurremo le istruzioni nel seguente modo:
+\begin{enumerate}
+  \item $\langle S \rangle$:
+    \begin{algorithmic}[0]
+      \State call $P$ on $mutex$
+      \State $S$
+      \State \textsc{Signal}()
+    \end{algorithmic}
+  \item $\langle await(B_i) \rightarrow S_i \rangle$:
+    \begin{algorithmic}[0]
+      \State call $P$ on $mutex$
+      \If{$\neg B_i$}
+        \State $waiting_i \gets waiting_i + 1$
+        \State call $V$ on $mutex$
+        \State call $P$ on $sem_i$
+      \EndIf
+      \State $S_i$
+      \State \textsc{Signal}()
+    \end{algorithmic}
+  \item La funzione ausiliaria $\textsc{Signal}()$:
+    \begin{algorithmic}[0]
+      \If{$B_0 \wedge waiting_o > 0$}
+        \State $waiting_0 \gets waiting_0 - 1$
+        \State call $V$ on $sem_0$
+      \ElsIf{$\ldots$}
+      \ElsIf{$B_{n-1} \wedge waiting_{n-1} > 0$}
+        \State $waiting_{n-1} \gets waiting_{n-1} - 1$
+        \State call $V$ on $sem_{n-1}$
+      \ElsIf{$\neg (B_0 \wedge waiting_0 > 0) \wedge \ldots \wedge \neg (B_{n-1} \wedge waiting_{n-1} > 0)$}
+        \State call $V$ on $mutex$
+      \EndIf
+    \end{algorithmic}
+\end{enumerate}
+
+\section{Monitor}
+
+I \emph{monitor} sono un paradigma di programmazione concorrente inventato da
+Hoare e presente in moltissimi linguaggi sotto varie forme.
+
+Un monitor \`e un modulo software che contiene \emph{dati locali}, \emph{una
+sequenza di inizializzazione} e \emph{una o pi\`u procedure}.
+I dati locali sono accessibili \textbf{solo alle procedure} del modulo stesso ed
+un processo entra in un monitor invocando una delle sue procedure. Solo un
+processo pu\`o essere all'interno del monitor mentre gli altri attendono
+(mutua esclusione). Eccone una descrizione in pseudo-sintassi:
+
+\begin{algorithm}[H]
+  \caption{Monitor}
+  \begin{algorithmic}[0]
+    \Monitor{name}
+    \State $\ldots$
+    \Comment{Variables}
+
+    \State
+    \Procedure{init}{}
+    \Comment{An optional initialization procedure}
+    \EndProcedure
+
+    \State
+    \ProcedureEntry{proc1}{$\ldots$}
+    \Comment{A pubblic procedure}
+    \EndProcedureEntry
+
+    \State
+    \Procedure{proc2}{$\ldots$}
+    \Comment{A private procedure}
+    \EndProcedure
+
+    \EndMonitor
+  \end{algorithmic}
+\end{algorithm}
+
+\subsection{Variabili di condizione}
+
+Per garantire la mutua esclusione tra le varie procedure si necessita di una
+qualche tecnica di sincronizzazione per poter sospendere i processi, farli uscire
+dalla mutua esclusione quando sono in attesa e farli tornare quando le condizioni
+si verificano.
+
+Si usano a tal file le \emph{variabili di condizione} che possono essere
+definite con la seguente sintassi:
+\begin{algorithmic}[0]
+  \State \textbf{condition} c
+\end{algorithmic}
+Ed accettano le operazioni:
+\begin{itemize}
+  \item \textsc{Wait}: attende il verificarsi di una condizione. \\
+    Rilascia la mutua esclusione e il processo viene sospeso in una coda di
+    attesa della condizione $c$.
+  \item \textsc{Signal}: segnala agli altri processi il verificarsi di una condizione. \\
+    Viene riattivato il processo successivo secondo una policia \emph{fair} mentre
+    il chiamante viene messo in attesa. Il chiamante verr\`a riattivato quando
+    il processo risvegliato uscir\`a dalla mutua esclusione (\emph{urgent stack}),
+    mentre la chiamata non avr\`a effetto se la coda per $c$ \`e vuota.
+\end{itemize}
+
+\subsection{Lettura/Scrittura}
+
+Reimplementazione di una soluzione al problema \ref{rw} con i monitor. I metodi
+\textsc{StartRead}, \textsc{StartWrite}, \textsc{EndRead} ed \textsc{EndWrite}
+vengono costruiti a partire dal seguente template:
+\begin{algorithmic}[0]
+  \ProcedureEntry{Template}{}
+    \If{can't read/write}
+      \State call \textsc{Wait} on $can\_\{read/write\}$
+    \EndIf
+    \State increase or decrease $nr$ or $nw$
+    \If{$nw = 0$}
+      \State call \textsc{Signal} on $can\_read$
+    \EndIf
+    \If{$nw = 0 \wedge nr = 0$}
+      \State call \textsc{Signal} on $can\_write$
+    \EndIf
+  \EndProcedureEntry
+\end{algorithmic}
+
+Ecco il monitor che risolve questo problema:
+
+\begin{algorithm}[H]
+  \caption{Lettura/Scrittura con monitor}
+  \begin{algorithmic}[0]
+    \Monitor{RW}
+    \State $nr, nw$
+    \State $\textbf{condition } can\_read, can\_write$
+
+    \State
+    \Procedure{init}{}
+      \State $nr, nw \gets 0$
+      \State $can\_read \gets nw = 0$
+      \State $can\_write \gets nr = 0 \wedge nw = 0$
+    \EndProcedure
+
+    \ProcedureEntry{StartRead}{}
+      \If{$nw \neq 0$}
+        \State call \textsc{Wait} on $can\_read$
+      \EndIf
+      \State $nr \gets nr + 1$
+      \State call \textsc{Signal} on $can\_read$
+    \EndProcedureEntry
+
+    \ProcedureEntry{EndRead}{}
+      \State $nr \gets nr - 1$
+      \If{$nr = 0$}
+        \State call \textsc{Signal} on $can\_write$
+      \EndIf
+    \EndProcedureEntry
+
+    \ProcedureEntry{StartWrite}{}
+      \If{$\neg(nr = 0 \wedge nw = 0)$}
+        \State call \textsc{Wait} on $can\_write$
+      \EndIf
+      \State $nw \gets nw + 1$
+    \EndProcedureEntry
+
+    \ProcedureEntry{EndWrite}{}
+      \State $nw \gets nw - 1$
+      \State call \textsc{Signal} on $can\_read$
+      \If{$nw = 0 \wedge nr = 0$}
+        \State call \textsc{Signal} on $can\_write$
+      \EndIf
+    \EndProcedureEntry
+    \EndMonitor
+  \end{algorithmic}
+\end{algorithm}
+
+\section{Message Passing}
+
+Il \emph{message passing} consente una comunicazione tra processi che non hanno memoria
+condivisa, tramite la comunicazione e lo scambio di dati attraverso un canale.
+I processi non utilizzano alcuna struttura dati condivisa (come potevano essere
+i Semafori o Monitor).
+
+La ricezione e consegna dei messaggi viene gestita dal sistema operativo, che
+non consentono politiche di broadcast o multicast.
+
+Questa tecnica di sincronizzazione sfrutta due procedure:
+\begin{enumerate}
+  \item \textsc{Send}: il processo mittente (dove avviene la chiamata) invia
+    un messaggio al destinatario \emph{specificato}.
+  \item \textsc{Recieve}: utilizzata dal processo ricevente per leggere i
+    messaggi in arrivo o in coda, con la possibilit\`a di specificare (filtrare)
+    quale sia il mittente a cui siamo interessati.
+\end{enumerate}
+
+Esistono poi tre tipologie di \emph{message passing}:
+\begin{itemize}
+  \item \textbf{sincrono}: Il \textsc{Send} \`e sincrono, mentre il \textsc{Recieve}
+    \`e bloccante. La dichiarazione dei metodi \`e la seguente:
+    \begin{enumerate}
+      \item $\textsc{sSend}(m, q)$ dove $m$ \`e il \emph{payload} e $q$ il
+        processo destinatario. La chiamata si blocca fino a quando $q$ non
+        riceve il messaggio.
+      \item $\textsc{aRecieve}(p)$ dove $p$ \`e il destinatario (opzionale).
+        Se il mittente non ha ancora inviato nessun messaggio il ricevente
+        (chiamante) si blocca in attesa.
+    \end{enumerate}
+  \item \textbf{asincrono}: Il \textsc{Send} \`e asincrono, mentre il \textsc{Recieve}
+    rimane bloccante. La dichiarazione dei metodi \`e la seguente:
+    \begin{enumerate}
+      \item $\textsc{aSend}(m, q)$ dove $m$ \`e il \emph{payload} e $q$ il
+        processo destinatario senza bloccarsi nell'attesa del ricevente.
+        Un qualche soggetto terzo (sistema operativo) si prende cura di tenere
+        una coda dei messaggi ancora non ricevuti.
+      \item $\textsc{aRecieve}(p)$ dove $p$ \`e il destinatario (opzionale).
+        Il ricevente si blocca in attesa di un messaggio dal mittente.
+    \end{enumerate}
+  \item \textbf{completamente asincrono}: Il \textsc{Send} \`e asincrono,
+    mentre il \textsc{Recieve} \textbf{non bloccante}. La dichiarazione dei
+    metodi \`e la seguente:
+    \begin{enumerate}
+      \item $\textsc{aSend}(m, q)$ \`e analogo al punto precedente.
+      \item $\textsc{nbRecieve}(p)$ dove $p$ \`e il destinatario (opzionale).
+        Il ricevente restituisce un messaggio nullo se la coda dei messaggi \`e
+        vuota (nessun messaggio in entrata).
+    \end{enumerate}
+\end{itemize}
+
+La versione asincronca di una chiamata pu\`o essere implementata tramite il suo
+analogo asincrono aggiungendo un messaggio extra di ackowledgment. Per fare il
+viceversa si deve invece utilizzare un ulteriore processo \emph{demone} che ha
+il compito di ricevere immediatamente i messaggi (sbloccando subito la chiamata
+sincrona) e smistandoli a dovere tra i dialoganti.
+
+\end{document}
