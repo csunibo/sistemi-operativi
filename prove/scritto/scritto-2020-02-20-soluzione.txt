@@ -1,0 +1,70 @@
+C1.
+
+Monitor Delay{
+  
+  cntProcess;
+  auto processList = new List(<Int, Condition>)();
+  
+  Delay(){
+    cntProcess = 0;
+  }
+
+  boolean delay(unsigned int timeout){
+    if(timeout < 1)
+      return false;
+    Condition c = new Condition();
+    listProcess.append(<timeout, c>);
+    cntProcess++;
+    listProcess.last().second.wait(); 
+    cntProcess--;
+    return true;
+  }
+  
+  int count(void){
+    return cntProcess;
+  }
+
+  void tick(void){
+    foreach(process in processList){
+        if(--process.first == 0){
+          process.second.signal();
+          processList.remove(process); // non influenza sul foreach
+        }
+      }
+
+  }
+}
+
+
+C2.
+
+Calcola x^2 sommando i primi x numeri dispari.
+
+
+G1.
+
+Disegnando il grafo di Hont e effettuando riduzione successive, tutti i processi terminano, quindi lo stato non è di deadLock.
+
+
+G2.
+
+a) Uno scheduler round-robin può essere inadatto poiché nella sua forma più semplice non prevede priorità,
+quindi i processi I/O multimediali potrebbero essere ritardati da processi molto meno recenti, per esempio
+la ricezione della posta elettronica.
+
+b) Per risolvere un problema di trashing non è necessario terminare forzatamente dei processi, 
+sarebbe sufficiente bloccare l'esecuzione di qualche processo e riattivarlo successivamente. In 
+questo modo riduciamo il numero di cache miss, sia durante la sospensione (poiché abbiamo meno processi attivi),
+sia dopo la riattivazione (se aspettiamo la conclusione dei processi non sospesi). Un lato negativo 
+è la riduzione del parallelismo.
+
+c) Con lo stesso numero di dischi RAID1 consente di memorizzare un minor numero di dati, 
+perché ha una resa del 50% a causa della duplicazione dei dati. Utilizzando RAID5 invece andiamo 
+ad utilizzare solamente dei bit di parità i quale occupano una quantità minore della duplicazione.
+Entrambi hanno un pari livello di sicurezza, perché RAID1 è un caso particolare di RAID4 con due dischi
+e RAID4 è un RAID5 senza distribuzione dei bit di parità.
+
+d) La capability è memorizzata dal processo stesso, di conseguenza rende più difficile la revoca 
+di autorizzazione perché il dato non è in un'area di memoria appartenente al sistema stesso
+
+
