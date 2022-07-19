@@ -1,0 +1,138 @@
+C1.
+Monitor Delirium {
+
+  float[] birre = new Array(MAX);
+  Pair assetati = new Pair(<Condition, Queue(float)>); // init a 0
+  Condition chiamato = new Condition();                // magazziniere
+  Queue richieste = new Queue(<Int>);
+
+  Delirium() {
+    birre = FULL;
+    assetati.second = new Queue(float);
+  }
+
+  int isempty() {
+    if (richieste.isEmpty()) {
+      chiamato.wait();
+    }
+    return richieste.dequeue();
+  }
+
+  void pour(int type, float quantity) {
+    if (birre[type] < quantity) {
+      quantity -= birre[type];
+      birre[type] = 0;
+      assetati[type].second.enqueue(quantity);
+      if (assetati[type].second.length == 1) {
+        richieste.enqueue(type);
+        chiamato.signal();
+      }
+      assetati[type].first.wait();
+      assetati[type].second.dequeue();
+    }
+    birre[type] -= quantity;
+    if (assetati[type].second.top() <= birre[type])
+      assetati[type].first.signal();
+    else {
+      richieste.enqueue(type);
+      chiamato.signal();
+    }
+  }
+
+  void loaded(int type, float quantity) {
+    birre[type] += quantity;
+    assetati[type].first.signal();
+  }
+}
+
+-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
+
+C2.
+
+Class Lifobuf {
+
+  Stack valueStack = new Stack(Int); // buffer interno
+  // pila dei semafori dove ciascun processo è bloccato
+  // semafori e processi sono bloccati uno a uno.
+  Stack processStack = new Stack(Semaphore);
+
+  Semaphore valueStackMutex = new Semaphore(1);
+  Semaphore processStackMutex = new Semaphore(1);
+
+  void push(int value) {
+    // memorizzo il nuovo valore nel buffer interno
+    valueStackMutex.P();
+    valueStack.push(value);
+    valueStackMutex.V();
+    // se c'era almeno un processo in attesa sblocco l'ultimo arrivato
+    processStackMutex.P();
+    if (!processStack.isEmpty())
+      processStack.pop().V();
+    processStackMutex.V();
+  }
+
+  int pop() { // Aspetto che processList non sia vuota
+    // se non ci sono valori memorizzati mi blocco
+    valueStackMutex.P();
+    if (valueStack.isEmpty()) {
+      valueStackMutex.V();
+      Semaphore s = new Semaphore(0);
+      processStackMutex.P();
+      processStack.push(s);
+      processStackMutex.V();
+      s.P();
+    } else {
+      valueStackMutex.V();
+    }
+    // prendo l'ultimo valore inserito nel buffer interno
+    valueStackMutex.P();
+    int tmp = valueStack.pop();
+    valueStackMutex.V();
+    return tmp;
+  }
+}
+
+------------------------------------
+
+G1.
+
+Lo scheduler è necessariamente preemptive perché A viene interrotto
+per cause indipendenti dalla sua volontà:
+  - Non si è interrotto di sua spuntanea volontà perché si è autoterminato,
+    siccome lo rincontriamo in istanti successivi
+  - Non si è interrotto di sua spuntanea volontà per operazioni di I/O 
+    o sistem call bloccante, perché all'istante 5 ha un altro CPU burst
+E' possibile che lo scheduler sia round-robin senza priorità con timeSlice di 3,
+ma non certo. Per esempio in questa esecuzione particolare tutti i processi potrebbero
+aver avuto la stessa priorità.
+
+-------------------------------------------------------------
+
+G2.
+
+a) E' bene non usarla se:
+  - La memoria secondaria ha dimensioni analoghe a quelle della memoria primaria
+  - Se non abbiamo bisogno di più memoria di quella fisica principale
+  - Viene a cadere il principio di località spaziale temporale 
+  - Si punta ad un sistema concettualmente minimale
+
+b) Il sistema FAT viene ancora utilizzato per:
+  - Implementazione semplice
+  - Interoperabilità (portabile) (vecchi sistemi windows)
+I restanti vantaggi vengono superclassati da sistemi di file-system ottimizzati 
+(ext2,ext3,ext4), e quindi non costituiscono motivi validi per utilizzare ancora FAT.
+
+c) Grazie ai sistemi RAID riusciamo a produrre sistemi con memoria di rindondanza la
+quale ci permette il recupero di memoria danneggiata/persa. Inoltre in base alla 
+tipologia di RAID utilizzata potremmo avere diversi vantaggi ad esempio in termini
+di velocità di lettura. A seconda dell'importanza dei dati memorizzati, potrebbe essere
+comunque necessario fare uso di un backup esterno, poiché c'è sempre la possibilità
+di un fallimento generalizzato a tutta la batteria.
+
+d) Siano P,Q,R processi. Sia A una classe di risorse, con due istanze a1,a2 sia B una
+classe di risorse con una istanza b1. Se a P abbiamo assegnato a1 e P richiede B, se 
+a Q abbiamo assegnato b1 e Q richiede A, se a R abbiamo assegnato a2,
+allora abbiamo un ciclo, ma non un knot (e infatti è completamente riducibile
+facendo terminare prima R, poi Q e infine P) e quindi neanche deadLock.
+
+
