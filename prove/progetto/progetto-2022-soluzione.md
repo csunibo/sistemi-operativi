@@ -9,6 +9,8 @@ quindi **cambia da gruppo a gruppo**.
 ## Gruppo 10
 
 Il sorgente consegnato è disponibile su questa [repository](https://github.com/lucat1/unibo_08574_progetto).
+Il gruppo partiva da un voto alto: forse le domande sono state tarate tenenedo
+conto di questo.
 
 Primo candidato:
 
