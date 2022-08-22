@@ -1,0 +1,38 @@
+monitor bss<T> {
+  Vec<T> v = [];
+  int putting = 0;
+  int getting = 0;
+
+  condition wait_for_get;
+  condition wait_for_put;
+
+  procedure entry void put(T value) {
+    ++putting;
+    v.push(value);
+    if(getting == 0)
+      wait_for_get.wait();
+    --putting;
+    if(putting > 0)
+      wait_for_get.signal();
+
+    if(getting > 0)
+      wait_for_put.signal();
+  }
+
+  procedure entry T[] get() {
+    ++getting;
+    if(putting == 0)
+      wait_for_put.wait();
+
+    Vec<T> res = v.copy()
+    --getting;
+    if(getting > 0)
+      wait_for_put.signal();
+    else
+      v.clean()
+
+    if(putting > 0)
+      wait_for_get.signal();
+    return res;
+  }
+}
