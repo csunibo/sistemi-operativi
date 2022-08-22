@@ -1,0 +1,21 @@
+void sasend(msg_t msg, pid_t dst) {
+  asend((getpid(), msg), dst)
+}
+
+Dic<pid_t, Queue<msg_t>> db;
+
+msg_t sarecv(pid_t sndrs[]) {
+  for(sndr in sndrs) {
+    if(!db.has(sndr) || db.get(sndr).size() == 0)
+      continue;
+
+    return db.get(sndr).pop()
+  }
+  (pid_t, msg_t) (sndr, msg);
+  do {
+    (sndr, msg) = arecv()
+    if(!(sndr in sndrs))
+      db.get(sndr).push(msg)
+  } while(!(sndr in sndrs))
+  return msg;
+}
