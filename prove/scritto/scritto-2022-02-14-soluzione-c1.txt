@@ -1,0 +1,24 @@
+monitor semval<T> {
+  // invariant: initial + nV - nP >= 0
+  int initial, nP, nV = 0,0,0;
+  condition cnd;
+  Stack<T> s; // LIFO
+
+  constructor(int i) {
+    initial = i
+  }
+
+  procedure entry T P() {
+    if(initial + nV - nP+1 < 0)
+      cnd.wait();
+    ++nP;
+    return s.pop();
+  }
+
+  procedure entry void V(T val) {
+    s.push(val);
+    ++nV;
+    if(inital + nV - nP >= 0)
+      cnd.signal();
+  }
+}
