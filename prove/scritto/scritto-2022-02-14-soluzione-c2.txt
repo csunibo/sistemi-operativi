@@ -1,0 +1,42 @@
+void snsend(msg_t msg, pid_t dest) {
+  asend((getpid(), msg), dest);
+}
+
+Map<pid_t, List<msg_t>> db;
+List<msg_t> unkeyd;
+
+// Restituisce l'n-esimo messaggio se lo ho nella lista l, altrimenti null
+// gestisce il caso n=0 e l'offset -1 per gli indici diversi da 0
+msg_t | null has(List<msg_t> l, int n) {
+  // voglio l'ultimo e lo ho
+  if(n == 0 && l.len() > 0)
+    return l.get(l.len()-1);
+  // non voglio l'ultimo e lo ho
+  else if(l.len() >= n)
+    return l.get(n-1);
+  else
+    return null;
+}
+
+List<msg_t> get_or_init(pid_t p) {
+  if(!db.has(p))
+    db.put(p, new List<msg_t>());
+
+  return db.get(p);
+}
+
+msg_t snrecv(pid_t sender, int n) {
+  List<msg_t> l;
+  if(sender == ANY)
+    l = unkyed;
+  else
+    l = get_or_init(sender);
+  
+  msg_t | null ret; 
+  while((ret = has(l, n)) != null) {
+    (pid_t, msg_t) (p, m) = arecv(sender);
+    unkeyed.add(m);
+    get_or_init(p).add(m);
+  }
+  return ret;
+}
