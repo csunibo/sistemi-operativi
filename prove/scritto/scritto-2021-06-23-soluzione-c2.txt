@@ -1,0 +1,32 @@
+class OrderedLifoSemaphore {
+  BinarySemaphore mutex;
+  int initial, nP, nV = 0,0,0
+  // A collection which sorts its content based on the priority of each item
+  // but behaves as a stack when two items of equal priority are encountered.
+  OrderedStack<BinarySemaphore> s;
+
+  constructor(int init) {
+    initial = init;
+  }
+
+  void PLP(int prio) {
+    mutex.P();
+    if(initial - nP+1 + nV < 0) {
+      BinarySemaphore new_sem = new BinarySemaphore(0);
+      s.push(prio, new_sem);
+      mutex.V();
+      new_sem.P();
+    }
+    nP++;
+    mutex.V();
+  }
+
+  void PLV() {
+    mutex.P();
+    ++nV;
+    if(initial - nP + nV >= 0 && !s.empty())
+      s.pop().V();
+    else
+      mutex.V();
+  }
+}
