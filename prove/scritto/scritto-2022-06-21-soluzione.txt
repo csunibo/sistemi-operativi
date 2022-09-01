@@ -1,0 +1,86 @@
+C1
+//versione fatta con assunzione che ci sia una sola skill
+int ww; //lavoratori in attesa
+int wo; //owner in attesa
+COndition ok2w
+COndition ok2o
+string N
+cercolavoro(nome, ....)
+  if (wo > 0)
+    N = nome
+    ok2o.signal()
+  else:
+    ww++
+    ok2w.wait()
+    N = nome
+    ww--
+               
+assumo(...)
+  if (ww > 0)
+    ok2w.signal()
+  else
+    wo++
+    ok2o.wait()
+    wo--
+  return N
+
+//----------------------------------------
+
+//soluzione del prof completa
+
+struct type {
+	char * skill;
+	int ww = 0; //lavoratori in attesa
+	int wo = 0; //owner in attesa
+	COndition ok2w
+	COndition ok2o
+}
+
+char * N
+cercolavoro(nome, sk)
+	struct type t = getorcreate skill(sk)
+	if (t->wo > 0)
+		N = nome
+		t->ok2o.signal()
+	else:
+	   t->ww++
+		t->ok2w.wait()
+		t->ww--
+      N = nome
+               
+	assumo(sk)
+		struct type t = getorcreate skill(sk)
+		if (t->ww > 0):
+			t->ok2w.signal()
+		else:
+			t->wo++
+			t->ok2o.wait()
+			t->wo--
+     	return N
+
+=================================================================
+C2
+//fatto dal prof il 26/08/22
+server[N] = ... pids
+serversender[N] = [None,...,None]
+
+process dispatcher:
+	while True:
+		<sender, msg> = arecv(ANY)
+		if sender in server:
+			i = indexof(sender, server)
+			asend(msg, serversender[i])
+			if !q.empty():
+				(client, msg) = q.dequeue()
+				asend(msg, server[i])
+				serversender[i] = client
+			else:
+				serversender[i] = None
+		else:
+			i = idleserver(serversender) #indice del primo None o restituisce None
+			if i = None:
+				q.add((ender,msg))
+			else:
+				asend(msg, server[i])
+				serversender[i] = sender
+
