@@ -1,0 +1,113 @@
+PATH_MAX massima lunghezza di un path
+
+Readlink 
+	ssize_t readlink(const char *restrict path, char *restrict buf, size_t bufsize);
+		Legge link simbolico -> -1 se errore
+
+Realpath
+	char *realpath(const char *restrict file_name, char *restrict resolved_name);
+		Deriva da file_name un path assoluto e lo mette in resolved_name -> se errore torna NULL
+
+int symlink(const char *path1, const char *path2); crea un symlink chiamato path2 che punta a path1
+int unlink(const char *filename) cancella filename, se esiste solo quello, cancella anche il file -> -1 se err.
+
+int open(const char *pathname, int flags);
+int open(const char *pathname, int flags, mode_t mode);
+Aprono il file pathname, importanti i flags:
+O_CREAT se pathname non esiste crea un regular file
+O_DIRECTORY se pathname non è una directory fa fallire open
+O_RDONLY richiede solo permessi di read e non anche di exec
+e la mode: https://man7.org/linux/man-pages/man2/open.2.html
+
+ssize_t read(int fd, void *buf, size_t count);
+Legge count byte dal file descriptor fd nel buffer buf
+
+int chdir( const char *pathname ); Cambia directory -> -1 se err.
+char *getcwd(char *buf, size_t size); Ritorna la current directory (usare con buff, sizeof(buff))
+DIR *opendir(const char *name); Apre la directory name
+int closedir(DIR *dirp); Chiude la directory con path dirp -> -1 se err.
+
+es: realpath(getcwd(currentDir,1000), currentPath); //realpath di cwd
+
+
+struct dirent *readdir(DIR *dirp); Ritorna puntatore alla prossima directory entry -> NON FARE FREE
+struct dirent 
+{
+	ino_t          d_ino;       /* Inode number */
+	off_t          d_off;       /* Current location in directory stream */
+	unsigned short d_reclen;    /* Length of this record */
+	unsigned char  d_type;      /* Type of file; not supported
+								  by all filesystem types */
+	char           d_name[256]; /* Null-terminated filename */
+};
+
+dtype può essere:
+DT_BLK This is a block device.
+DT_CHR This is a character device.
+DT_DIR This is a directory.
+DT_FIFO This is a named pipe (FIFO).
+DT_LNK This is a symbolic link.
+DT_REG This is a regular file.
+DT_SOCK This is a UNIX domain socket.
+DT_UNKNOWN The file type could not be determined.
+
+
+int stat(const char *restrict pathname, struct stat *restrict statbuf);
+Ritorna in statbuf
+ struct stat 
+{
+	dev_t     st_dev;         /* ID of device containing file */
+	ino_t     st_ino;         /* Inode number */
+	mode_t    st_mode;        /* File type and mode */
+	nlink_t   st_nlink;       /* Number of hard links */
+	uid_t     st_uid;         /* User ID of owner */
+	gid_t     st_gid;         /* Group ID of owner */
+	dev_t     st_rdev;        /* Device ID (if special file) */
+	off_t     st_size;        /* Total size, in bytes */
+	blksize_t st_blksize;     /* Block size for filesystem I/O */
+	blkcnt_t  st_blocks;      /* Number of 512B blocks allocated */
+}
+lstat() is identical to stat(), except that if pathname is a symlink, 
+	then it returns information about the link itself, not the file that the link refers to.
+	
+MACRO
+Usare su elementi di tipo stat o lstat -> st_mode
+Non 0 se:
+S_ISDIR è una directory
+S_ISCHR è speciale (es. terminale)
+S_ISBLK è un block special file (es. disco)
+S_ISBLK è un file regolare
+S_ISFIFO è un FIFO special o una pipe
+S_ISLNK è un symlink 
+S_ISSOCK è un socket
+
+
+EXEC
+The execv(), execvp(), and execvpe() functions provide an array of pointers to null-terminated strings 
+that represent the argument list available to the new program. 
+The first argument, by convention, should point to the filename associated with the file being executed. 
+The array of pointers must be terminated by a NULL pointer.
+
+
+SEGNALI
+Ricordarsi di:
+	sigset_t
+		https://www.gnu.org/software/libc/manual/html_node/Signal-Sets.html
+	signalfd
+		https://man7.org/linux/man-pages/man2/signalfd.2.html
+	signal
+		https://man7.org/linux/man-pages/man2/signal.2.html
+
+FORK
+	Fork system call is used for creating a new process which runs concurrently with the process that makes the fork() 
+	After a new child process is created, both processes will execute the next instruction following the fork() 
+
+	It takes no parameters and returns an integer value. Below are different values returned by fork().
+	Negative Value: creation of a child process was unsuccessful.
+	Zero: Returned to the newly created child process.
+	Positive value: Returned to parent or caller. The value contains process ID of newly created child process.
+
+waitpid(pid) sospende il processo corrente finche' il figlio (pid) termina 
+o finche' il processo corrente riceve un segnale di terminazione o un segnale che sia gestito da una funzione.
+
+

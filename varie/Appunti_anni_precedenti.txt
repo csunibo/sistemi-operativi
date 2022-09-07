@@ -1,0 +1,164 @@
+2015 
+    - Gestione Directory
+        sysconf - get the value of the sistem variables NAME [long sysconf(int name)]
+        getpwnam_r - get password file entry [int getpwnam_r(const char *name, struct passwd *pwd,char *buf, size_t buflen, struct passwd **result)]
+        rewinddir - reset directory stream [void rewinddir(DIR *dirp)]
+
+    - Gestione Pipe
+        pipe - create pipe [struct fd_pair pipe()]
+        fdopen - stream open functions [FILE *fdopen(int fd, const char *mode)] {Apre file descriptor}
+2016   
+    -Maggio
+        strrchr - The C library function char *strrchr searches for the last occurrence of the character c (an unsigned char) in the string pointed to, by the argument str. [char *strrchr(const char *str, int c)]
+        qsort - The C library function void qsort sorts an array. [qsort(void *base, size_t nitems, size_t size, int (*compar)(const void *, const void*))]
+                { int compare( const void* a, const void* b)
+                {
+                    my_var_type int_a = * ( (my_var_type*) a );
+                    my_var_type int_b = * ( (my_var_type*) b );
+
+                    if ( int_a == int_b ) return 0;
+                    else if ( int_a < int_b ) return -1;
+                    else return 1;
+                } }
+        nanosleep - high-resolution sleep [int nanosleep(const struct timespec *req, struct timespec *rem)];
+
+    -Giugno 
+        getgrgid - get group file entry [struct group *getgrgid(gid_t gid)]
+        stat - get file status [int stat(const char *pathname, struct stat *statbuf)]
+                struct stat {
+                    dev_t     st_dev;         /* ID of device containing file */
+                    ino_t     st_ino;         /* Inode number */
+                    mode_t    st_mode;        /* File type and mode */
+                    nlink_t   st_nlink;       /* Number of hard links */
+                    uid_t     st_uid;         /* User ID of owner */
+                    gid_t     st_gid;         /* Group ID of owner */
+                    dev_t     st_rdev;        /* Device ID (if special file) */
+                    off_t     st_size;        /* Total size, in bytes */
+                    blksize_t st_blksize;     /* Block size for filesystem I/O */
+                    blkcnt_t  st_blocks;      /* Number of 512B blocks allocated */
+                    struct timespec st_atim;  /* Time of last access */
+                    struct timespec st_mtim;  /* Time of last modification */
+                    struct timespec st_ctim;  /* Time of last status change */
+                };
+
+2017
+    -Febbraio
+        realpath - return the canonicalized absolute pathname [char *realpath(const char *path, char *resolved_path)]
+        utime - change file last access and modification times [int utime(const char *filename, const struct utimbuf *times)]
+                struct utimbuf {
+                    time_t actime;       /* access time */
+                    time_t modtime;      /* modification time */
+                };
+
+2018
+    -Febbraio
+        waitpid - wait for process to change state [pid_t waitpid(pid_t pid, int *status, int options)]
+
+    -Giugno
+        timerfd_create, timerfd_settime, timerfd_gettime - timers that notify via file descriptors [int timerfd_create(int clockid, int flags) || int timerfd_settime(int fd, int flags, const struct itimerspec *new_value, struct itimerspec *old_value)]
+                struct timespec {
+                    time_t tv_sec;                /* Seconds */
+                    long   tv_nsec;               /* Nanoseconds */
+                };
+                struct itimerspec {
+                    struct timespec it_interval;  /* Interval for periodic timer */
+                    struct timespec it_value;     /* Initial expiration */
+                };
+        poll, ppoll - wait for some event on a file descriptor [int poll(struct pollfd *fds, nfds_t nfds, int timeout)]
+                struct pollfd {
+                    int   fd;         /* file descriptor */
+                    short events;     /* requested events */
+                    short revents;    /* returned events */
+                };
+
+    -Agosto
+        sigemptyset, sigaddset - POSIX signal set operations [int sigemptyset(sigset_t *set) || int sigaddset(sigset_t *set, int signum)]
+        sigprocmask - examine and change blocked signals [int sigprocmask(int how, const sigset_t *set, sigset_t *oldset)] {sigprocmask(SIG_BLOCK, &mask, NULL)}
+
+2019
+    -Febbraio
+        inotify - monitoring filesystem events
+                struct inotify_event {
+                    int      wd;       /* Watch descriptor */
+                    uint32_t mask;     /* Mask describing event */
+                    uint32_t cookie;   /* Unique cookie associating related
+                                            events (for rename(2)) */
+                    uint32_t len;      /* Size of name field */
+                    char     name[];   /* Optional null-terminated name */
+                };
+        inotify_init, inotify_init1 - initialize an inotify instance [int inotify_init(void)]
+        inotify_add_watch - add a watch to an initialized inotify instance [int inotify_add_watch(int fd, const char *pathname, uint32_t mask)]
+    
+    -Maggio
+        eventfd - create a file descriptor for event notification [int eventfd(unsigned int initval, int flags)]
+        pthread_create - create a new thread [int pthread_create(pthread_t *thread, const pthread_attr_t *attr, void *(*start_routine) (void *), void *arg)]
+        read - read from a file descriptor [ssize_t read(int fd, void *buf, size_t count)]
+        write - write to a file descriptor [ssize_t write(int fd, const void *buf, size_t count)]
+
+    -Giugno
+        prctl - operations on a process [prctl(int option, unsigned long arg2, unsigned long arg3, unsigned long arg4, unsigned long arg5)]
+            prctl(PR_SET_NAME, name);
+            prctl(PR_SET_CHILD_SUBREAPER, father);
+        wait, waitpid, waitid - wait for process to change state [The wait() system call suspends execution of the calling process until one of its children terminates. The call wait(&status) is equivalent to: waitpid(-1, &status, 0); The waitpid() system call suspends execution of the calling process until a child specified by pid argument has changed state.]
+
+
+
+C
+----READ FROM DIRECTORY
+
+    DIR *folder;
+    struct dirent *entry;
+    folder = opendir(".");
+    while( (entry=readdir(folder))){/*fai l'informatica*/}
+    closedir(folder);
+
+    stat()  ---> tutte le info sul file
+
+----PIPE
+    
+    int fd[2];
+
+    pipe(fd);
+
+    pid = fork();
+    if pid()
+        close(fd[0])
+        //informatica
+        write(fd[1],&variabile, sizeof(variabile))
+        close(fd[1])
+    else
+        close(fd[1])
+        //informatica
+        read(fd[0],&variabile, sizeof(variabile))
+        close(fd[0])
+
+----READFILE
+    char *line=NULL;
+    size_t size=0;
+    while(getline(&line, &size, file) !=-1)
+    free(line)
+    
+    char *fgets(line, 100 /*caratteri da  leggere*/, FILE *stream)
+
+----STRING
+    strtok(char *riga, separatore)
+    strtok(NULL, separatore) //legge di lì in avanti
+
+----TIME
+    utime   modifica tempo di accesso/modifica
+
+---PATH
+    char *realpath(const char *path, char *resolved_path);
+    symlink(const char *file, const char *linkname)
+
+PY
+
+----READ FROM DIRECTORY
+    for entry in os.scandir(dir):
+        entry.*
+
+
+----THREAD
+
+    x = threading.Thread(target=execute, args=(elem,))
+    x.start()

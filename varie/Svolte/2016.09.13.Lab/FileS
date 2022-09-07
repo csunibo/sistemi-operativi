@@ -1,0 +1,9 @@
+Scrivere un programma che mostri il funzionamento del file locking.
+In particolare il programma cplk avra’ due argomenti che I pathname di due file. Il contenuto del primo file deve
+essere copiato nel secondo usando la system call sendfile. 
+Prima di iniziare la copia occorre usare la system call fcntl per bloccare il file di output (write lock).
+Completata la copia occorre chiamare nuovamente la fcntl per sbloccare il file.
+Inserire un ritardo (sleep) con valore casuale da 1 a 10 secondi sia prima sia dopo aver sbloccato il file e
+stampe di controllo che indichino quando il file viene bloccato e sbloccato.
+In questo modo lanciando piu’ esecuzioni concorrenti con output sullo stesso file deve apparire che l’accesso in
+scrittura e’ mutualmente esclusivo.

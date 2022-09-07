@@ -1,0 +1,5 @@
+ls -l
+ls -l
+ls -l
+ping -c 5 google.com
+grep rtt

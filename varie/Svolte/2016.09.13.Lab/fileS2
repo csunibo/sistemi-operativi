@@ -1,0 +1,6 @@
+Scrivere un altro programma rdlk che blocchi il file passato come parametro in lettura (read lock) per un numero di
+secondi random (da 1 a 10 secondi).
+Anche in questo caso inserire stampe di controllo che indichino quando il file viene bloccato e quando viene
+sbloccato.
+Eseguendo molteplici copie di rdlk con cplk dell’esercizio 1 si dovrebbe vedere che I lock rispettano l’invariante dei
+readers/writers. (usare come parametro di rdlk il secondo parametro di cplk)
