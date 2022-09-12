@@ -1,0 +1,36 @@
+// soluzione esercizio c.2 fatta del prof Davoli
+/*in rcv si fa un ciclo. Ci sono due casi
+  1) un msg uguale al precedente allora si elimina il messaggio arrivato prima
+  2) non è stato ricevuto prima allora lo si aggiunge alla lista
+
+  struttura dati ESTERNA (static) per avere struttura dati comune tra piu CHIAMATE
+*/
+
+L : list of T
+
+void tsend(msg_t msg, pid_t dest):
+    asend(msg, dest)
+    
+msg_t trecv(void)
+  while True:
+    msg = arecv(ANY);
+    if msg in L:
+      L.delete(msg)
+      return msg
+    else:
+      L.add(msg)
+      
+//Sì, hanno lo stesso potere espressivo,
+//infatti si può anche implementare il msg passing asincrono dato quello testardo:
+
+buf: msgbuffer
+      
+asend(msg_t msg, pid_t dest):
+  tsend((getpid(), msg), dest)
+  tsend((getpid(), msg), dest)
+ 
+msg_t arecv(sender):
+  while ((msg = buf.get(sender))  == NULL)
+    (id, m) = trecv()
+    buf.add(id,m)
+  return msg
