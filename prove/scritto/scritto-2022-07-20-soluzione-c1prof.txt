@@ -1,0 +1,38 @@
+//soluzione es c.1 del prof Davoli
+monitor porto(){
+  boolean is_molo_free = true //per la nave
+  boolean is_park_free = true //per il camion
+  int dariempire=0 //per la nave, quanto è ancora da riempire?
+  condition ok2attracca;
+  condition ok2salpa;
+  condition ok2scarica;
+  condition ok2ancora;
+
+  porto attracca(capacita){
+    if (is_molo_free == false)
+      ok2attracca.wait() //se il molo è occupato fermati ad aspettare
+    is_molo_free = False //attracca.
+    dariempire = capacita
+    ok2ancora.signal()
+
+  porto.salpa(){
+    if (dariempire > 0)
+      ok2salpa.wait() //posso salpare solo se ho saturato la capacità della nave
+    is_molo_free = True //salpa.
+
+  porto scarica(quantita){
+    if (is_park_free == false)
+      ok2scarica.wait() //se il parcheggio è occupato fermati ad aspettare
+    is_park_free = False //parcheggia.
+    while (quantita > dariempire){ //la quantità non può essere versata completamente
+      quantita -= dariempire //metti quello che ci sta sulla nave
+      dariempire = 0 //satura la nave
+      ok2salpa.signal() //lascia andare la nave
+      ok2ancora . wait() //il camion deve aspettare la prossima nave
+    }
+    dariempire -= quantita //metti tutta la capacità del camion sulla nave
+    if (dariempire == 0) //ora la nave è riempita?
+      ok2salpa.signal()
+    is_park_free = True //il camion se ne va
+    ok2scarica.signal;
+}
