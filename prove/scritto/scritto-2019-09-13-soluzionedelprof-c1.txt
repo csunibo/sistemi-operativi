@@ -1,0 +1,32 @@
+//soluzione esercizio c.1 proposta dal prof Davoli
+Monitor mbuf{
+  #define MAXELEM 5
+  Condition ok2add; // buf.size() < MAXELEM
+  Condition ok2get; // buf.size > 1 && buf.head().n <= wrec
+  //Condition okToFUNZ quando posso eseguire quella FUNZ.
+  buf = queue of struct {type val, int n};
+  int wrec = 0;
+
+  void add(type data, int n){
+    if(buf.size() >= MAXELEM)
+        ok2add.wait();
+    buf.add(data,n);
+    if (buf.head().n <= wrec) //
+       ok2get.signal();
+ }
+//può fare la add quando cè uno spazio per un elemento nel bounded buffer
+
+  type get(void){
+    wrec++;
+    if (buf.size == 0 || buf.head().n > wrec)
+      ok2get.wait()
+    wrec--
+    v = buf.head().val
+    buf.head().n--
+    if (buf.head().n > 0)
+      ok2get.signal()
+    else
+      buf.get()
+      ok2add.signal()
+    return v;
+}
