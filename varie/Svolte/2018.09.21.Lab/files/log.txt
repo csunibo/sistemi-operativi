@@ -1,0 +1,6 @@
+Sep 20 19:58:32 eipi ntpd[2051]: Listen normally on 99 eth0 [fe80::8456:a70]:123
+Sep 20 19:58:32 eipi ntpd[2051]: new interface(s) found: waking up resolver
+Sep 20 19:58:34 eipi ntpd[2051]: Soliciting pool server 151.3.106.211
+Sep 20 19:58:35 eipi ntpd[2051]: Soliciting pool server 94.177.187.22
+Sep 20 19:58:48 eipi ntpd[2051]: Soliciting pool server 80.211.155.206
+Sep 20 19:58:49 eipi ntpd[2051]: Soliciting pool server 212.45.144.206

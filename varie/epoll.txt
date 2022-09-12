@@ -1,0 +1,35 @@
+https://youtu.be/Y6pFtgRdUts?t=506     select
+https://man7.org/linux/man-pages/man7/epoll.7.html
+https://stackoverflow.com/questions/51777259/how-to-code-an-epoll-based-sockets-client-in-c
+https://stackoverflow.com/questions/44848896/epoll-instantly-returns-on-stdin
+https://linuxhint.com/epoll-7-c-function/
+https://linuxhint.com/use-poll-system-call-c/#:~:text=The%20poll()%20feature%20allows,becoming%20available%20for%20I%2FO.
+https://linuxhint.com/list_of_linux_syscalls/
+https://youtu.be/2hba3etpoJg?t=347           FIFO
+
+threads
+https://stackoverflow.com/questions/11624545/how-to-make-main-thread-wait-for-all-child-threads-finish
+https://linuxhint.com/c-sigprocmask-function-usage/
+https://linuxhint.com/c-sigaction-function-usage/
+
+
+NOTES on syscalls
+https://github.com/AngeloGalav/UniOSScripts
+https://github.com/NikolasAcquaviva/ProvePratiche
+https://github.com/alewin/c-code-snippets
+https://github.com/alewin/Unibo2016-os-exams
+https://github.com/pollomarzo/rdso1920
+https://github.com/SeppiaBrilla/UNIBOS_2019-2020
+https://github.com/giuliobilli01/University-exercises
+https://github.com/csunibo/sistemi-operativi
+https://web.archive.org/web/20170110031117/http://www.unixguide.net/unix/programming/
+https://www4.cs.fau.de/Lehre/SS19/V_SPIC/Linux/libc-api/group__signal.shtml ABOUT SIGACTION family's function
+https://www.ibm.com/docs/en/zos/2.3.0?topic=functions-sigfillset-initialize-signal-mask-include-all-signals SIGFILLSET
+https://www.youtube.com/watch?v=rPV6b8BUwxM MMAP SHARED VARIABLE
+https://www.youtube.com/watch?v=c7xf5dvUb_Q SBRK NEW END
+https://linuxhint.com/brk-system-call-c/ SBRK BRK EXAMPLE
+https://www.youtube.com/watch?v=NkfIUo_Qq4c MULTIPLE PIPES triangolo
+
+https://www.qnx.com/developers/docs/7.0.0/#com.qnx.doc.neutrino.lib_ref/topic/s/sigprocmask.html SYSCALL EXAMPLES
+https://www.youtube.com/watch?v=1RIjnW_Upzk DICT
+https://rosettacode.org/wiki/Category:C

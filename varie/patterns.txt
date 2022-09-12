@@ -1,0 +1,168 @@
+/*
+Rendete la vostra directory home inaccessibile ad altri utenti (sia in lettura che in esecuzione)
+	sudo chmod 0700 ~/ oppure sudo chmod 0700 /home/matteo.manuelli
+Si puo’ tenere una sola directory in /public che abbia come nome il vostro username e.g. “/public/giovanni.rossi” e che abbia permessi 700
+	cd /public sudo mkdir matteo.manuelli sudo chmod 0700 ./matteo.manuelli
+*/
+/*
+
+set showmode, set relativenumber, :nohl, \c con / oppure :set ignorecase
+https://stackoverflow.com/questions/2287440/how-to-do-case-insensitive-search-in-vim
+
+
+2022.07.22: stesura dell'albero della directory (tree.c), con path tutte relative (mostrati solo i nomi) poichè si usa openat e fdopendir. Otteniamo questo risultato perchè passiamo ricorsivamente il fd della directory da esplorare relativa alla direcotry corrente, e successivamente utilizzerà fdopendir(fd) anzichè opendir(char*). Per printare tab => "\t". Ricordarsi di chiudere sempre tutto quello che è stato aperto!
+Per ottenere i nomi dei file relativi soltanto al punto di partenza, guarda davolib.
+Per aggiornare una stringa => prima la resetti poi snprintf. In davolib salviamo le path dentro un array
+
+2022.06.22: tramite segnali devo trasferire 8 char (=> 8 byte => un int64). Tramite segnali posso trasferire anche puntatori, ma poichè processi diversi non condividono lo stesso spazio logico, sono costretto a mascherare l'int64 come puntatore.
+Prendo chuck di una stringa.
+Castare i puntatori vuol dire leggere il dato in un altro modo.
+Atoi funziona solo se come argomento ha un numero stringato.
+Sigqueue.
+Sigaction per sighandler speciale.
+Conversione da pointer (int64_t) a stringa
+
+2022.06.08: inversione link (funzione swap): ottengo i loro nomi e directory con basename e dirname, li formatto per creare delle path, creo i file tramite la flag O_CREAT e con sendfile trasferisco il contenuto da un file all'altro (anzichè usare la funzione cpy di lucat1 o la mia su davolib)
+Per capire se è un link usare lstat.
+Bzeroare struct dirent *ent mi ha dato problemi.
+Per scrivere qualsiasi cosa dentro un buffer (e.g. path, numeri, etc), usa sprintf; per appedere il buffer temporaneo già formattato usa strcat. Eventualmente aggiungere i vari "n" delle funzioni. Impiegare buffer temporanei quando dobbiamo sempre utilizzare il contenuto di un altro buffer (e.g. dove quest'ultimo contiene la path corrente)
+Con symlink usa come target il path assoluto dell'oggetto puntato altrimenti è relativo.
+Esempio di openat
+Python: os.scandir, controlla se il file è di mia proprietà tramite os.stat().st_uid e os.getuid(). Analizzo la cartella /proc
+
+2021.09.16: inotify di file creato, dopodichè luncho il nome del file creato(potrei usare la lib del prof https://github.com/virtualsquare/s2argv-execs per compilare basta aggiungere execs.c) e salvo il suo output in un file (fflush)
+Python: lista ricorsiva sottoalbero con dizionario dove i valori sono delle liste. Ordine in ordine alfabetico le chiavi. In caso avessimo dovuto sortare i valori
+tuples.sort(reverse = True, key=lambda y: y[1])
+
+2021.07.15: dlopen e riconoscere se è un eseguibile oppure no, da WIFEXITED(status)
+Python: cercare il file modificato più anticamente e recentemente, utilizzando float(-inf)
+esempio di formattazione print(f"File modificato + recentemente: {maxDir}/{maxFile} at {maxEditTime}")
+print(f"File modificato + anticamente: {minDir}/{minFile} at {minEditTime}")
+
+2021.06.24: inotify, se il file è un eseguibile salva in un log il suo output, altrimenti il suo contenuto. come testata ha il nome del file (fflush perchè ent->name non formattato mi sa) (si potrebbe utilizzare sendfile, in ambo i casi?) (fflush(dest)) (fflush(LogFile))
+Python: for walkingDirPath, subDirs, files in os.walk(directory):
+	for fileName in files:
+		fullPath = os.path.join(walkingDirPath, fileName) #path completa
+		#https://stackoverflow.com/questions/541390/extracting-extension-from-filename-in-python
+		extension = os.path.splitext(fullPath)[1]
+in python non esiste argc quindi len(sys.argv)
+
+2020.02.21:char cwd[256];
+   		if (getcwd(cwd, sizeof(cwd)
+		mentre scorriamo una directory con dirent, anzichè utilizzare lstat per controllare i file possiamo vedere ent->d_type
+Python: alternativa a os.scandir #https://stackoverflow.com/questions/3207219/how-do-i-list-all-files-of-a-directory
+arr = os.listdir('./')
+for element in arr:
+	fullPath = os.path.join("./", element)
+	if os.path.isdir(fullPath): continue
+	extension = os.path.splitext(fullPath)[1]
+	if extension in dictionary: #se è tra le chiavi
+		dictionary[extension].append(fullPath)
+	else:
+		dictionary[extension] = [fullPath]
+keylist = list(dictionary.keys())
+keylist = sorted(keylist, key=str.casefold) #altrimenti maiuscole hanno la precedenza
+for key in keylist:
+	print(f"{key}: {str(dictionary[key])}")
+
+2020.01.17: se hanno lo stesso nome e stesso inode allora skippa
+se file e stesso inode allora hard link; creo un file con gli stessi permessi di un altro
+write(f, contenuto, strlen(contenuto)); dove f fd open
+Python: ABBASTANZA IMP lanci comandi in parallelo con thread e catturi l'output decodificato, splittata stringa di argomenti
+comandi = strConcat.split("//")
+for cmd in comandi:
+
+2019.09.18: para sleep 20 // ls -l // ps // sleep 3 IMPORTANTE! IN C MONITOR SPLIT INTO ARGV
+
+2019.07.16: chat dove il contenuto di uno deve apparire anche sullo schermo dell'altro TODO make socket reusable. Uso di epoll
+Python: Scrivere un programma python o uno script bash che cerchi tutti i file con uguale contenuto in una
+## directory. I file con lo stesso contenuto devono diventare link fisici a un unico file.
+
+2019.06.19: PR_SET_CHILD_SUBREAPER, fork nipote che ottine pid figlio ((e il figlio ottiene pid padre ovvero 0), wait return pid
+
+2019.05.29: eventfd come semaforo, consumer producer
+
+2019.01.16: ripristina il contenuto di un file eliminato notificato da inotify BELLO
+
+2018.09.21: log dei segnali ricevuto e in che ora. sigprocmask per gestirli e catturarli nel main;
+emulare esecuzione di un programma leggendo ria alla volta e array di timeout
+
+2018.07.18: execvp(argv[0], argv + 1); fread(&itsPid, sizeof(int), 1, stream), conta basandosi sui segnali quanti programmi attivi ci sono, sigprocmask.
+Python: shell minimale IMPO
+
+2018.06.22: molteplici TIMERFD IMPORTANTE su come gestirli! (qsort)
+
+2018.05.29: CONFRONTO PARALLELO CON CARICO SUDDIVISO IMP! fseek SEEK_END come lavorare con file, WEXITSTATUS IMP
+Python: get number out of a string IMPO numbers = [int(s) for s in line.split() if s.isdigit()]
+                for i in range(len(numbers)): f = open(folder + subdir + "/status", "r") IMP I NUMERI SONO I PROCESSI
+
+2018.02.18:Python: salva in un dizionario per ogni processo, e salva i risultati finali (valori) in una lista per poterli ordinare
+ tuples.append(( subdir, len(descs) )) #dava problemi di EOF => controllare parentesi
+
+tuples.sort(reverse = True, key=lambda y: y[1])
+
+2017.02.17: invecchiare il file con utime, getopt
+
+2017.01.17: quanti nomi hanno i file esclusivamente all'interno di un sottoalbero
+TESTDICT.c https://github.com/cosimopp/prove-pratiche-so/blob/main/2017.01.17/testDict.c IMP
+
+2016.09.13: fcntl (fd_write, F_SETLKW, &lock); buf.st_size per sapere quanto copiare
+
+
+2016.07.29: IMPO inizializzazione e free array di stringhe; checkera il gruppo di un file
+proper initialization of sigaction
+Python: mode = os.lstat(file).st_mode
+    if stat.S_ISDIR(mode):
+        # https://docs.python.org/3/library/stat.html
+        print(file + " è una cartella")
+    elif os.stat(file).st_gid == grp.getgrnam(sys.argv[2]).gr_gid: C WAY IMP
+
+2016.05.31: si lavora su nomi file, lancio programmi ad un certo momento IMP
+non si attende la fine dell'esecuzione per */
+/* continuare IMPORTANTEEEE si aspettando millisec
+
+2016.02.15: char *has_trailing_digits(char *s, int n){
+    char *tmp;
+    for (tmp = s+n;(  (*tmp <= '9') && ('0' <= *tmp )); tmp--);
+    return tmp + 1;
+}
+
+
+2015.09.18: /proc è una cartella speciale che non può essere monitorata con inotify, c'è un esempio di inotify
+python: # Scrivere un programma che trovi fra tutti i file all'interno di un sottoalbero tutti I link simbolici che puntano a file o
+# directory inesistenti.
+import os
+
+# print(f'{fullPath} (which pointed to {os.path.realpath(fullPath)}), has a fake reference')
+
+
+def check(fullPath):
+    resolved_path = os.path.realpath(fullPath)
+    if os.path.exists(resolved_path) == False:
+        print(f"{fullPath} -> {resolved_path}")
+
+
+directory = "."
+for walkingDirPath, subDirs, files in os.walk(directory):
+    for fileName in files:
+        fullPath = os.path.join(walkingDirPath, fileName)  # path completa
+        if os.path.islink(fullPath):
+            check(fullPath)
+
+
+
+
+
+2015.07.20: IMPORTANTEEEE inverto i bit di ogni carattere di un file https://github.com/cosimopp/prove-pratiche-so/blob/main/2015.07.20/OK.c
+ALTRO IMPORTANTEEEE redirezione più volte durante l'esecuzione lo stdout https://github.com/cosimopp/prove-pratiche-so/blob/main/2015.07.20/ex2.c
+
+
+2015.06.18: da stringa a binario IMPORTANTEEEE  if os.access(f, os.X_OK):
+
+2015.05.29: cat con signal => polling, ctrld detection
+
+2015.01.21: IMPORTANTEEEE bashpipes.c, md5sum python
+
+2014.09.25: killa tutti altri figli se uno ha già terminato, pipes sospese
+
+https://github.com/cosimopp/prove-pratiche-so/blob/main/2014.07.17/genobj.c

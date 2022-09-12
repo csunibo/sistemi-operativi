@@ -1,0 +1,549 @@
+Quando ci sono i semafori, qualsiasi risorsa condivisa dev'essere controllata dal semaforo.
+
+Si dice che un sistema di processi multipli presenta una race condition qualora
+il risultato finale dell'esecuzione dipenda dalla temporizzazione con cui vengono
+eseguiti i processi.
+
+
+
+La parte di programma che utilizza risorse condivise è la critical section.
+
+   v c'è garanzia loro validità dentro sezione critica
+(& precondizioni per accedere a sezione critica che garantiscono l'invariante)
+
+MutEx. safety => che i thread non interferiscano fra di loro nell'accesso a risorse condivise, così da evitare
+				 race condition
+	   liveness => che i meccanismi di sincronizzazione non blocchino l'avanzamento del programma
+	   Quando entriamo in mutua esclusione con mutex.In(), gli altri processi fanno polling/busy waiting, mentre noi siamo gli unici ad avanzare. Se ci fermiamo aspettando una condizione/evento esterno, il programma non avanzerà => DEADLOCK
+
+DeadLock
+
+LiveLock (mutua cortesia)
+
+
+
+
+BusyWaiting (polling su condizione d'accesso + attesa non necessaria => signal)
+			(if one of the programs might need to access the cs much more often than the other.
+			If we need to access to cs  but it's the other programs turn, then we are forced to wait,
+			even if the other program doesn't need the cs at all until later)
+
+ex di BusyWaiting
+
+shared turn = P;
+process P {
+
+	while True {
+
+		poco_codice_non_critico;
+		while (turn == Q){ //finchè è il turno di Q
+			;/*do nothing*/
+		}
+		*critical section*
+
+		turn = Q;
+		altro_codice_non_critico;
+
+	}
+}
+
+process Q {
+
+	while True {
+
+		TANTO_CODICE_NON_CRITICO...;
+		while (turn == P) {
+			;
+		}
+		*critical section*
+		turn = P;
+		altro_codice_non_critico;
+	}
+}
+
+
+
+
+
+
+
+//global e local (ricordarsele per ordine alfabetico)
+Test & Set => TS(x,y):= <y = x; x = 1> //x variabile globale rappresentante una sezione critica
+
+/* Per ricreare questo meccanismo
+process P_iesimo {
+	while True{
+		codice_non_critico;
+
+		mutex.In()
+		*critical section*
+		mutex.Out()
+
+		codice_non_critico;
+	}
+}
+*/
+
+global shared globalBusy = 0;
+process P_iesimo {
+
+	local localCopy;
+	while True {
+
+		//mutex.In()
+		do{
+			TS(globalBusy, localCopy)
+		} while (localCopy == 1);
+
+		*critical section*
+
+		//mutex.Out()
+		globalBusy = 0;
+	}
+}
+
+ex c.2 2017.06.19
+
+
+
+
+
+
+
+Semaphore. Ogni statement tra la fine di una P el'inizio di una V avviene in MutEx
+
+//Quando ci sono i semafori, qualsiasi risorsa condivisa dev'essere controllata dal suo semaforo. In ogni momento
+//mai una .P bloccante dentro una sezione critica, altrimenti deadlock ("il processo rimane bloccato sul semaforo e non libera la sezione critica per gli altri processi => non si avanzerà")
+class Semaphore {
+	private int value; //il valore del semaforo non può diventare mai negativo: risorse disponibili
+	Queue queue = new FIFOQueue(); //=> no starvation
+
+	Semaphore(int init) {
+		if (init < 0){
+			throw("il numero di risorse iniziali non può essere un numero negativo");
+			exit(EXIT_FAILURE);
+		}
+		val = init;
+	}
+
+	/*Metodi eseguiti atomicamente*/
+
+	void P() { //<while (val <= 0); val--> ASPETTO
+		< //implementate direttamente dal SO
+		if (value > 0){
+			value --;
+		}
+		else {
+			pid_t pid = getInvokingProcessID();
+			queue.add(pid); //anzichè attesa attiva si autoblocca
+			suspend(pid); //con l'operazione suspend(), il SO mette il processo nello stato waiting
+		}
+		>
+	}
+
+	void V() { //<val++> SEGNALO. Persa se nessuna P() precedente sulla risorsa
+		<
+		if (queue.empty()){
+			value++;
+		}
+		else {
+			pid =queue.remove(); //process ID del processo da sbloccare viene selezionato
+			wakeup(pid); //con l'operazione wakeup(), il SO mette il processo sospeso nello stato ready => non più bloccato sulla P().
+			//Quando il processo risvegliato effettuerà la V(), rilascerà, oltre alla risorsa, il batòn, => ripristinerà il valore del semaforo come libero, ovvero uno.
+		}
+		>
+	}
+}
+
+/*molti autori considerano una situazione di errore una situazione di errore un'operazione V su un semaforo binario che abbia già valore 1*/
+class BinarySemaphore {
+	private int value; //può assumere solo i valori 0 e 1
+	/*due code poichè V è bloccante se il valore del semaforo è 1*/
+	Queue queue0 = new Queue();
+	Queue queue1 = new Queue();
+
+	BinarySemaphore(){
+		value = 1;
+	}
+
+	void P(){
+		<
+		pid_t pid = getInvokingProcessID();
+		if (value == 0){
+			queue0.add(pid);
+			suspend(pid);
+		}
+		else if (queue1.size > 0){ //allora il valore del semaforo è necessariamente 1
+			pid = queue1.remove();
+			wakeup(pid); //i processi risvegliati da queue1 NON HANNO PIU' BISOGNO DELLA SEZIONE CRITICA poichè l'hanno rilasciata =>
+			//il processo che ha chiamato la P e il processo risvegliato possono procedere parallelamente
+		}
+		else {
+			value--;
+		}
+		>
+	}
+	void V(){
+		<
+		pid_t pid = getInvokingProcessID();
+		if (value == 1){
+			queue1.add(pid);
+			suspend(pid);
+		} //allora il valore del semaforo era necessariamente 0
+		else if (queue0.size > 0){ //passaggio testimone
+			pid = queue0.remove();
+			wakeup(pid);
+		}
+		else {
+			value++;
+		}
+		>
+	}
+}
+
+/*Semafori - Implementazione tramite semafori binari*/
+class Semaphore {
+	private int value;
+
+	//un semaforo mutex per garantire mutua esclusione sulle variabili condivise
+	private BinarySemaphore mutex(1);
+
+	//una coda per garantire fairness
+	QueueOfBinSem queue = new FIFOQueue();
+
+	...costruttore...
+
+	void P(){
+		mutex.P();
+		if (value > 0){
+			value--;
+			mutex.V();
+		}
+		else {
+
+			//individual blocked semaphore creato in allocazione dinamica per ogni processo che partecipa, così da farlo aspettare
+			BinarySemaphore S = new BinarySemaphore(0);
+			queue.add(s);
+			mutex.V();
+			S.P();
+			//in mezzo non c'è codice non critico. Queste procedure servono per consentire o meno l'accesso nella sezione critica
+			free(S);
+		}
+	}
+	void V(){
+		mutex.P();
+		if (queue.isEmpty()){
+			value++;
+		}
+		else {
+			s = queue.remove(); //coda dei processi che stavano aspettando
+			s.V();
+		}
+		mutex.V();
+	}
+}
+
+/*Semafori - Implementazione tramite semafori binari => LIFO CS
+//"il batòn indica chi può entrare in sezione critica"
+
+Stack stack = new SemaphoreStack(); //coda anzichè pila se FIFO. waiting
+Semaphore mutex = new Semaphore(1);
+global bool busy = FALSE; //variabile globale che rappresenta lo stato della risorsa condivisa
+
+void enter_lifo_cs(){
+	mutex.P();
+	if (busy){ //se CondIesima non è verificata
+		Sem = new Semaphore(0);
+		stack.push(Sem); //waiting[i]++ numero di processi bloccati su condizione iesima
+		mutex.V(); //TECNICA PANINO
+		Sem.P(); 			 //v nonostante sia variabile condivisa posso poichè mi è stata passata la mutua esclusione
+		free(Sem); //waiting[i]-- //Reader-Writer Problem => Entriamo nella sezione critica => nr++
+	}
+	else {
+		busy = TRUE;
+		mutex.V();
+	}
+}
+
+void exit_lifo_cs(){
+	mutex.P();
+	//nr--											v Now is true e.g. no readers for writers
+	if (stack.isEmpty() == FALSE) { //if CondIesima == TRUE && waiting[i] > 0
+		Sem = stack.pop(); //passaggio di testimone - passa la matua esclusione //pg 69/85 Drif
+		Sem.V(); //NON E' BLOCCANTE! il processo sbloccato prosegue in parallelo! Non aspetta nessuna condizione esterna!
+	}
+	else if (stack.isEmpty()){
+		busy = FALSE; //altrimenti (alla fine se passaggio di testimone) rilascio la risorsa
+	}
+	mutex.V();
+}
+
+enter_lifo_cs();
+*critical section*
+exit_lifo_cs();
+
+################################################################################
+
+/*ho deciso di provare ad implementare il problema producer-consumer con un solo semaforo poichè mi viene naturale assegnare un solo semaforo per ogni risorsa condivisa/contesa. Garantisce la mutua esclusione, ma controlla l'underflow/overflow ?*/
+
+			//globalBusy
+global bool isFree = TRUE; //variabile globale che rappresenta lo stato della risorsa condivisa, ovvero il buffer. Aspettare stato o condizione
+Semaphore mutex = new Semaphore(1); //a differenza del problema dei lettori e scrittori, solo un consumatore o un produttore può entrare nella zona critica. Un solo processo alla volta nella zona critica
+
+shared int buffer = n;
+
+Queue codaConsumatori = new FIFOQueue();
+Queue codaProduttori = new FIFOQueue();
+
+void ENTER(bool isConsumer){
+	mutex.P();
+	if (isFree){
+		/*start to consuming or producing... => risorsa sarà occupata. Così agendo garantiamo mutua esclusione*/
+		if (buffer == n && isConsumer){ //if (buffer > 0 n && isConsumer)
+			isFree = FALSE;
+			mutex.V();
+		}
+		else if (buffer == 0 && isConsumer == FALSE){ //if (buffer < n && isProducer)
+			isFree = FALSE;
+			mutex.V();
+		}
+		//solo così evitiamo underflow/overflow (ex due azioni consecutive non contemporanee concluse dei consumer (n-n = 0, 0-n = ERROR))
+		else {
+			//semaforo individuale bloccato creato in allocazione dinamica per ogni processo che partecipa, così da farlo aspettare
+			Sem = new Semaphore(0);
+
+			if (isConsumer) codaConsumatori.add(Sem);
+			else codaProduttori.add(Sem);
+
+			mutex.V();
+			Sem.P();
+			free(Sem);
+		}
+	}
+	else { //wait
+		//semaforo individuale bloccato creato in allocazione dinamica per ogni processo che partecipa, così da farlo aspettare
+		Sem = new Semaphore(0);
+
+		if (isConsumer) codaConsumatori.add(Sem);
+		else codaProduttori.add(Sem);
+
+		mutex.V();
+		Sem.P();
+		free(Sem);
+	}
+}
+
+void EXIT(bool isConsumer){
+	mutex.P();
+
+	/*passaggio testimone*/
+	if (isConsumer){
+		if (codaProduttori.isEmpty() == FALSE) {
+			producer = codaProduttori.remove();
+			producer.V();
+		}
+		else {
+			isFree = TRUE; //altrimenti rilascio la risorsa
+		}
+	}
+	else { //isProducer
+		if (codaConsumatori.isEmpty() == FALSE) {
+			consumer = codaConsumatori.remove();
+			consumer.V();
+		}
+		else {
+			isFree = TRUE; //altrimenti rilascio la risorsa
+		}
+	}
+
+	mutex.V();
+}
+
+//https://www.quora.com/Why-are-two-semaphores-fill-count-and-empty-count-used-for-the-semaphore-implementation-of-the-producer-consumer-problem-Couldnt-we-have-just-used-one
+
+process Producer {
+	while (TRUE) {
+		ENTER(FALSE);
+		buffer += n;
+		EXIT(FALSE);
+	}
+}
+process Consumer {
+	while (TRUE){
+		ENTER(TRUE);
+		buffer -= n;
+		EXIT(TRUE);
+	}
+}
+
+#############################################
+
+/*IMPORTANTE!!!*/
+//un semaforo per ogni condizione (sulla risorsa) che aspetto
+Semaphore empty = new Semaphore(1); //1 => la condizione empty inizialmente è vera (se BinarySemaphore) altrimenti quante unità empty/numero di risorse (=> Semaphore(n)) //numero di risorse inizialmente disponibili
+Semaphore full  = new Semaphore(0);
+//Semaphore mutex = new Semaphore(1); //per garantire mutua esclusione sulla variabile condivisa queue
+//Queue queue = new Queue();
+
+process Producer {
+	while (TRUE) {
+		...codice non critico dove produco...
+		empty.P(); //aspetto che sia vuoto
+		buffer += n;
+		/* OPPURE PER BUFFER LIMITATO =>
+		mutex.P();
+		queue.add(random());
+		mutex.V();
+		*/
+		full.V(); //segnalo che si è riempito
+	}
+}
+process Consumer {
+	while (TRUE){
+		full.P(); //aspetto che sia pieno
+		buffer -= n;
+		/* OPPURE
+		mutex.P();
+		food = queue.remove();
+		mutex.V();
+		*/
+		empty.V(); //segnalo che si è svuotato
+		...codice non critico dove consume(food)...
+	}
+}
+
+
+Semaphore s = new Semaphore(1);
+
+process P_iesimo {
+	while True {
+		codice_non_critico;
+		/*classic pattern*/
+		s.P();
+		*critical section*
+		s.V();
+
+		codice_non_critico;
+	}
+}
+
+
+
+
+Cena dei filosofi (attesa circolare) => rompere la simmetria (filosofo mancino). Come implementare per far sì che le bacchette vengano prese assieme?
+
+
+Monitor OOP ci può essere al massimo una procedura nel monitor in esecuzione in ogni istante
+solo un processo alla volta può essere all'interno del monitor;
+gli altri processi che invocano il monitor sono sospesi nella entry queue, in
+attesa che il monitor diventi disponibile.
+Ogniqualvolta un processo vuole entrare in contatto con la sezione critica,
+lo farà esclusivamente tramite il monitor. Pertanto il programmatore è deresponsabilizzato dal gestire la critical section.
+Il monitor è già fornito di per sè di un meccanismo di mutua esclusione (tramite la ENTRY QUEUE), ma non di sincronizzazione (=> attesa di  condizioni sullo stato del sistema).
+
+variabili che rappresentano lo stato del sistema
+code (che rappresentano la) per ogni condizione per la quale un processo sta aspettando (aspetto che sia... aspetto che diventi...)("che stato aspetto? => negalo")
+-individuare casi d'attesa, assegnando ad ognuno di essi una variabile di condizione (cond bool sulle variabili che rappresentano lo stato)
+-casi d'attesa = casi dove si può verificare race condition
+
+
+Pattern comune: (accesso mediante strutture)
+a) Quali sono le variabili che rappresentano lo stato del sistema
+b) Individuare le modalità d'attesa - Quanti casi di attesa ho? Quali sono le motivazioni dell'attesa?
+Occorrono delle sincronie bloccanti, ed ad ogni caso di sincronizzazione bloccante gli assegnamo una variabile di condizione,
+e la variabile di condizione deve rappresentare una condizione booleana sulle variabili che rappresentano lo stato.
+1) controllare se posso o meno fare l'operazione, verificando la negazione della condizione attesa (espressa attraverso gli stati) per accedere alla risorsa ("count > 0", "count <= n", "bool isFull", etc). Se vera aspetto sulla condizione attesa.
+2) fare l'operazione, aggiorno lo stato e vedere se il nuovo stato mi consente di far andare avanti altri
+3) check starvation
+
+rilascio risorsa non è mai bloccante
+
+Starvation
+
+
+
+
+
+da MP sincrono a MP asincrono (MP asincrono ha più potere espressivo)
+
+asend(msg, dest):
+	ssend(<msg, getpid(), dest>, server)
+
+areceive(mitt): //aspettiamo msg da questo mittente
+	ssend(<NULL, mitt, getpid()>, server)
+	msg = sreceive(server)
+	return msg
+
+server():
+
+	//It could be a boolean matrix instead.
+	int waiting[MITTENTI][DESTINATARI] //il destinatario sta aspettando di ricevere un messaggio dal mittente
+
+	Queue queue[MITTENTI][DESTINATARI] //il destinatario non ha ancora richiesto di ricevere messaggi dal mittente
+
+	while TRUE:
+
+		(msg, p, q) = sreceive(ANY);
+
+		if msg == NULL: //ricevuto dal destinatario q il quale ora è pronto a ricevere un msg dal mittente p
+
+			//"c'è già un msg in coda?"
+			if queue[p][q].isEmpty():
+				waiting[p][q]++
+			else:
+				msg = queue[p][q].remove()
+				ssend(msg, q)
+
+		else: //ricevuto dal sender p
+
+			if waiting[p][q] == 1:
+				ssend(msg, q)
+				waiting[p][q] = 0
+			else if waiting[p][q] == 0:
+				queue[p][q].add(msg)
+
+
+
+
+
+
+//partial sync send deve essere bloccante
+pssend(msg, dest){
+	//il destinatario potrebbe avermi notificato che lui era pronto mentre io non lo ero.
+	//con questo stratagemma pulisco la mia coda dei messaggi
+	//se non facessi questa operazione, il mittente invierebbe un messaggio illudendosi che il destinatario sia ora pronto, quando invece lo era prima
+	asend("puliscoCoda", getpid()) //mi autoinvio un messaggio
+	msg = ""
+	while msg != "puliscoCoda":
+		msg = areceive(ANY) //controllo messaggi che arrivano da chiunque
+
+	//sender invia il messaggio solo dopo aver ricevuto l'ok dal destinatario (il quale dice "ora sono online")
+	okToSend = areceive(dest); //areceive è bloccante; se riceviamo un messaggio da esso => possiamo inviare
+	asend([getpid(), msg], dest) //il sender ha ricevuto l'ok per inviare: invia immediatamente!
+}
+
+//partial sync receive NON deve essere bloccante
+psreceive(mitt){
+	asend("dummy", mitt) //notifichiamo al mittente che siamo pronti a ricevere, con un messaggio dummy
+	//la funzione receive fornita è bloccante, e il mittente dal quale aspettiamo può non essere online.
+	//quindi ci automandiamo un messaggio per sbloccare la receive
+	asend([getpid(), "dummy"], getpid())
+
+	sender, msg = areceive(ANY) //abbiamo la garanzia di aver ricevuto almeno un messaggio
+	if sender != getpid(){ //il mittente voleva effettivamente inviarci un messaggio
+
+		//rimuovo messaggio che mi ero automandato, altrimenti prossima psreceive() lo avrebbe letto, illudendosi che il mittente non sia online
+		areceive(getpid()); //significa "aspetto un messaggio che viene da me stesso", ed abbiamo la garanzia di averlo ricevuto
+
+		//alla fine, ritorno il messaggio
+		return msg
+	}
+	else return None
+}
+
+
+##############################
+AAAGLIATO ma mi sono CORRETTO - readers entrano tutti assieme in sezione critica, e solo l'ultimo chiude la mutua esclusione passata.
+https://www.cs.unibo.it/~renzo/so/materiale2122/concorrenza2122-4p.pdf secondo quadrante cartesiano pg 37/50
+se W - R - R - W=> race condition dei due reader sull'operazione "nr++" poichè non siamo più in mutua esclusione (supponendo che che i processi bloccati siano in una coda)(l'ultimo reader, poichè non ci sarà nessun lettore in attesa, chiuderà la mutua esclusione passata dal writer) slide 149
+

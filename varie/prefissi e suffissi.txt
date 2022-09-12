@@ -1,0 +1,75 @@
+per comprendere prefissi e suffissi (printf https://youtu.be/VA22ESilQO0)
+		
+		char buf[100];
+    	va_list args; //(variadic) needs initialization
+		
+    	printf("Example\n");
+
+    	f = > fprintf(stdout, "Example\n"); //dealing with stream e.g. file
+		//safer version
+    	_s  => fprintf_s(stdout, "Example\n"); //"instead of just calling the function, check if parameters are okay 
+    	//before doing the operation so it doesn't crash the application" (C11)
+    	
+    	s => sprintf(buf, "Example\n"); //sovrascrive
+    	
+    	sn => snprintf(buf, 3, "12345\n"); // => buf = 123, len(buf) = 100
+    	
+    	v => vfprintf(stdout, "Example\n", args); //syscall gets a va_list or vector as a single argument
+    	execv(const char *pathname, char *const argv[]);
+
+		//wide-character
+    	w => fwprintf_s(stdout, "Example\n"); //treats formatted string as being a wide char array => each char
+		//is more than just one byte
+
+		"p" usually stands for program file vs pathname 
+		execlp("ls", ...) vs execl("/bin/ls", ...) //relies on PATH
+
+		"l" usually stands for list or link
+
+		"e" usually stands for environment 
+
+		"_r" usually stands for reentrant.
+		You can call reentrant functions from multiple threads simultaneously, or in nested loops, et cetera. Reentrant versions usually take an extra argument, this argument is used to store state between calls instead of using a global variable.
+		
+		char *strtok(char *str, const char *delim) {
+    		static char *save;
+    		return strtok_r(str, delim, &save);
+		}
+
+		toDo: "u, _at" //user? un-?
+
+note personali: https://youtu.be/j9yL30R6npk
+
+#include <stdio.h>
+#include <string.h>
+#include <dirent.h>
+
+void listFiles(const char* dirname) {
+    DIR* dir = opendir(dirname);
+    if (dir == NULL) {
+        return;
+    }
+
+    printf("Reading files in: %s\n", dirname);
+
+    struct dirent* entity;
+    entity = readdir(dir);
+    while (entity != NULL) {
+        printf("%hhd %s/%s\n", entity->d_type, dirname, entity->d_name);
+        if (entity->d_type == DT_DIR && strcmp(entity->d_name, ".") != 0 && strcmp(entity->d_name, "..") != 0) {
+            char path[100] = { 0 };
+            strcat(path, dirname);
+            strcat(path, "/");
+            strcat(path, entity->d_name);
+            listFiles(path);
+        }
+        entity = readdir(dir);
+    }
+
+    closedir(dir);
+}
+
+int main(int argc, char* argv[]) {
+    listFiles(".");
+    return 0;
+}

@@ -1,0 +1,34 @@
+Esercizio 0 (“Se copiate, vi cacciamo”) 
+Rendete la vostra directory home inaccessibile ad altri utenti (sia in lettura che in esecuzione). Si puo’ tenere una 
+sola directory in /public che abbia come nome il vostro username e.g. “/public/giovanni.rossi” e che abbia permessi
+700.
+Non usare system o popen o simili! Non fare exec di “ssh -c”. 
+Esercizio 1: Linguaggio C (obbligatorio) 20 punti
+Fare un programma di confronto parallelo di file.
+pcmp file1 file2
+non stampa nulla se i due file sono uguali altrimenti stampa "file1 file2 differ". pcmp deve creare due processi figli;
+mentre un processo controlia la prima meta’ del file, l'altro deve controllare l’altra meta’.
+Se un dei due processi figli trova una differenza, termina immediatamente segnalandolo al padre con opportuno
+valore di ritorno. In questo caso il padre deve terminare l'altro processo.
+Esercizio 2: Linguaggio C: 10 punti
+usando “getopt” consentire di scegliere il grado di parallelismo voluto:
+ pcmp -j 8 file1 file2
+deve creare 8 processi, ogni processo controlla 1/8 del file.
+Esercizio 3: Script bash o Python: (10 punti): 
+I file /proc/*/status contengono importanti informazioni relative ai processi in esecuzione.
+In particolare una riga contiene la costante "Uid:" seguita da quattro numeri (sono l'uid reale, effettivo, salvato e del
+file system per il processo in considerazione).
+Scrivere un programma python o uno script bash che per ogni utente che ha un ruolo in almeno un processo
+indichi quanti processi sono attivi che hanno quell'utente come reale, effettivo, salvato o del file system.
+esempio di output:
+0 10 12 12 12
+1000 5 3 3 3
+(l'utente 0 ha 10 processi come utente reale, 12 come effettivo, salvato e del file system. l'utente 1000 ha 5
+processi come utente reale e 3 come effettivo, salvato e del file system. Per esempio questo caso si riferirebbe a
+10 processi di root, 5 dell'utente 1000 dei quali 2 sono setuid root).
+Esercizio 4: (“Consegnate! E’ ora!”): 
+Consegnare lo script e il sorgente del programma C, in attachment separati, entro il tempo a disposizione, via email a: renzo chiocciola cs.unibo.it. Il subject del mail deve essere uguale a PROVAPRATICA, i nomi dei file in
+attachment devono contenere il vostro cognome (per evitare confusioni in fase di correzione).
+INOLTRE:
+Se volete che il vostro lavoro venga giudicato, lasciate aperta la vostra sessione (incluso il vostro editor) e lasciate
+il laboratorio. Verrete richiamati uno alla volta per una breve discussione sul vostro elaborato
