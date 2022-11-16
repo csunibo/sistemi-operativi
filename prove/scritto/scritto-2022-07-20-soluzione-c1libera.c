@@ -34,11 +34,12 @@ monitor porto(){
     is_molo_free = False //attracca.
     dariempire = capacita
     ok2ancora.signal()
-
+	
   porto.salpa(){
     if (dariempire > 0)
       ok2salpa.wait() //posso salpare solo se ho saturato la capacità della nave
     is_molo_free = True //salpa.
+	ok2attracca.signal() //sblocchiamo le navi in attesa del molo libero
 
   porto scarica(quantita){
     if (is_park_free == false)
@@ -104,6 +105,7 @@ void porto_salpa() {
 	if(dariempire > 0)
 		condition_wait(ok2salpa); //posso salpare solo se ho saturato la capacità della nave
 	is_molo_free = true; //salpa.
+	condition_signal(ok2attracca); //sblocchiamo le navi in attesa del molo libero
 	monitor_exit(porto);
 }
 
