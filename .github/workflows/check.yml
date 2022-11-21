@@ -41,7 +41,7 @@ jobs:
         name: Link file names under ./prove
         with:
           path: "./prove"
-          pattern: '^(\.gitkeep)|((scritto|totale|parziale\d|orale(\d?)|progetto(\d?))-\d{4}(-\d{2}-\d{2})?(-[a-z0-9]+)?-(testo|soluzione)(-[a-z0-9]+)?\.[a-zA-Z0-9]+)$'
+          pattern: '^(\.gitkeep)|((scritto|totale|parziale\d|orale(\d?)|progetto(\d?))-\d{4}(-\d{2}-\d{2})?(-[a-z0-9]+)?-(testo|soluzione)(-[a-z0-9]+)?(\.[a-zA-Z0-9]+)+)$'
           recursive: "true"
       - uses: csunibo/lint-filenames@v1.1.0
         name: Link file names under ./varie
