@@ -19,6 +19,7 @@ monitor porto(){
     if (dariempire > 0)
       ok2salpa.wait() //posso salpare solo se ho saturato la capacità della nave
     is_molo_free = True //salpa.
+	ok2attracca.signal() //sblocchiamo le navi in attesa del molo libero
 
   porto scarica(quantita){
     if (is_park_free == false)

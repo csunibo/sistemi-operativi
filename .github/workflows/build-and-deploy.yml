@@ -19,7 +19,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  REGEX_INCLUDE: "\\.(pdf|link|txt|c|sh|py)$"
+  REGEX_INCLUDE: "\\.(pdf|link|txt|c|sh|py|tar.gz)$"
 
 jobs:
   build:
