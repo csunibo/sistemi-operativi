@@ -1,0 +1,438 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage{eucal}
+\usepackage{amsfonts, amssymb, amsmath}
+\usepackage{graphicx}
+
+\title{Sistemi Operativi Cheats-sheet}
+\author{kocierik}
+
+\begin{document}
+
+
+\maketitle
+
+\section{Concorrenza}
+
+\textbf{interliving} $=$ Quando al massimo abbiamo un processo in esecuzione\\
+\textbf{overlapping} $=$ Quando abbiamo più processi in esecuzione\\
+\textbf{Context Switch} $=$ Operazione del sistema operativo che conserva lo stato del processo \\
+\textbf{Race Condition} $=$ Quando il risultato dell'esecuzione dipende dalla temporalizzazione con cui vengono eseguiti i processi\\
+Due proprietà di un programma concorrente sono:
+\begin{itemize}
+  \item Proprietà: \textbf{Safety}, i processi non devono \textbf{interferire} tra loro nell'accesso alle risorse condivise
+  \item Proprietà: \textbf{Liveness}, i meccanismi di sincronizzazione non devono prevenire l'avanzamento del programma (un processo non deve attendere \textbf{indefinitamente}
+
+\end{itemize}
+\textbf{Mutua Esclusione} $=$ Ad ogni istante al massimo un processo può accedere a una risorsa\\
+\textbf{DeadLock} $=$ Indica una situazione in cui due o più processi o azioni si bloccano a vicenda, aspettando che uno esegua\\
+\textbf{Starvation} $=$ Si intende l'impossibilità continua, da parte di un processo pronto all'esecuzione, di ottenere le risorse sia hardware sia software di cui necessita per essere eseguito\\
+Requisiti \textbf{Critical section:}
+\begin{itemize}
+  \item Mutua esclusione
+  \item Assenza di deadLock
+  \item Assenza di Dalay (la \textbf{CS} non deve aspettare l'ingresso di un'altra CS)
+  \item Starvation
+\end{itemize}
+\textbf{Busy Waiting} $=$ Controllo iterativo su una condizione di accesso\\
+\textbf{SpinLock} $=$ Tecnica consiste nel verificare periodicamente se il lock è stato sbloccato, effettuando un test (\textbf{Test And Set})\\
+Semafori:
+\begin{itemize}
+  \item \textbf{V} viene inviato un segnale ( rilascio risorsa)
+  \item \textbf{P} viene invocata per attendere un segnale
+\end{itemize}
+\textbf{Semaforo Mutex} $=$ Utilizzato per garantire mutua esclusione\\
+\textbf{Monitor} $=$ Un monitor è un costrutto di sincronizzazione. \\
+Un'istanza di un tipo monitor può essere utilizzato per rendere mutuamente esclusivo l'accesso a risorse condivise.\\
+Un processo entra in un monitor invocando una delle sue procedure. Solo un processo alla volta puo' essere dentro un monitor
+\textbf{CV} $=$ Variabili di condizione. Nelle quali sono definite operazioni di:
+\begin{itemize}
+  \item $c.wait$ attende il verificarsi della condizione
+  \item $c.signal$ segnala che la condizione e' vera, ponendo il chiamante in attesa e causando la riattivazione di un processo
+\end{itemize}
+\textbf{Message Passing} $=$ paradigma di comunicazione tra processi. Con operazioni di:
+\begin{itemize}
+  \item \textbf{send}, spedisce un messaggio a un processo destinatario
+  \item \textbf{receive}, riceve un messaggio da un processo mittente
+\end{itemize}
+
+\section{Architettura sistemi operativi}
+Un \textbf{processo} è un programma in esecuzione che utilizza risorse fonrnite dal computer\\
+Un \textbf{file} è l'astrazione di un archivio di dati\\
+Un \textbf{file system} è composto da un insieme di file e responsabile di:
+\begin{itemize}
+  \item Creazione e cancellazione di file
+  \item Creazione e cancellazione di directory
+  \item Manipolazione di file e directory
+  \item Codifica del file system su una sequenza di blocchi
+\end{itemize}
+La progettazione di un S.O deve tener conto di:
+\begin{itemize}
+  \item Efficienza 
+  \item Manutenibilità
+  \item Espansibilità
+  \item Modularità
+\end{itemize}
+E' possibile suddividere i S.O in due grandi famiglie a seconda della loro struttura:
+\begin{itemize}
+  \item Sistemi con struttura semplice, descritti tramite un insieme di procedure. Un programma sbagliato può mandare in crash l'intero sistema
+  \item Sistemi con struttura a strati
+\end{itemize}
+Possiamo individurare $4$ categorie di kernel:
+\begin{enumerate}
+  \item \textbf{Kernel monolitici}, tutte le procedure vengono raggruppate e gestite mutualmente. E' presente una astrazione dell'HW (\textbf{efficienza e modularità}). Se una procedura \textbf{fallisce} l'intero sistema \textbf{crasha} (\textbf{Linux, UNIX, FreeBSD})
+  \item \textbf{Micro kernel}, esso si deve occupare di funzionalità minime di gestione dei processi e della memoria, e \textbf{meccanismi di comunicazione} per permettere ai processi clienti di chiedere servizi ai processi serventi. Semplice astrazione HW coordinate da un kernel minimale. Basato sulle primitive di Message Passing (\textbf{memoria condivisa}). Questa tipologia è \textbf{espandibile, portabile, robusta, sicura} ma \textbf{inefficiente}
+  \item \textbf{Kernel ibridi}, essi mantengono una parte di codice nello spazio utente per ragioni di maggiore efficienza di esecuzione. Anch'essi usano message passing 
+  \item \textbf{ExoKernel}, non forniscono astrazione dell'HW, ma forniscono librerie che mettono a contatto diretto le applicaizoni con l'HW.
+\end{enumerate}
+Nelle \textbf{macchine virtuali}, dove non si va a creare l'illusione di molteplici processi che posseggono la propria CPU e la propria memoria
+
+\section{Richiami hardware}
+\textbf{Interrupt} $=$ meccanismo che permette l'interruzione del normale ciclo di esecuzione della CPU. Inseguito ad un interrupt abbiamo una gestione:
+\begin{itemize}
+  \item Hardware, dove il processore sospende le operazioni del processo corrente, e salta ad un particolare indirizzo di memoria (\textbf{iterrupt handler})
+  \item Software, dove viene gestito l'interrupt handler e ritorna il controllo al processo interrotto
+\end{itemize}
+E' possibile avere interrupt multipli. Sono presenti due approcci:
+\begin{itemize}
+  \item Disabilitazione degli interrupt, ulteriori segnali vengono ignorati ma restano pendenti. Viene attivato inseguito l'interrupt handler
+  \item Interrupt annidati, dove è possibile interromperne uno di priorità inferiore
+\end{itemize}
+La comunicazione tra un processore e dispositivo può avvenire in due modalità:
+\begin{itemize}
+  \item \textbf{Programmed I/O}, dove la CPU carica gli input nei registri attraversio i bus. Il dispositivo attendereà il risultato (\textbf{busy-waiting-polling})
+  \item \textbf{Interrupt-Driven I/O}, la CPU carica gli input nei registri ed inseguito il S.O sospende l'esecuzione del processo che ha eseguito l'operazione di input ed esegue un altro processo. Una volta terminato viene segnalato attraverso un interrupt e così la CPU copia i dati dal buffer locale. Output molto simile. In questo modo il processore spreca parte del suo tempo per trasferire dati e inoltre la velocità di traferimento è limitata
+\end{itemize}
+La \textbf{Direct Memory Access} (DMA), attiva l'operazione di I/O specificando l'indirizzo in memoria di destinazione o di provenienza dei dati\\
+La \textbf{Random Access Memory} (RAM), assieme ai registrti è l'unico spazio di memorizzazione che può essere acceduto direttamente dal processore (\textbf{volatile}). Nei sistemi moderni l'accesso avviene tramite \textbf{MMU} (trasforma gli indirizzi logici in fisici)\\
+La \textbf{Read Only Memory} (ROM), memoria accessibile solo in lettura\\
+In un disco le operazioni di \textbf{seek} corrispondono allo spostamento del pettine di testa sul disco. E' una operazione costosa e deve essere limitata. A differenza delle SSD \textbf{non} hanno un numero di cicli di scrittura limitato\\
+Un meccanismo di \textbf{caching} consiste nel memorizzare \textbf{parzialmente} i dati di una memoria in una seconda più costosa ma più efficiente. Maggiori richiesta aumentano prestazioni. Il caching può essere:
+\begin{itemize}
+  \item Hardware (cache CPU) dove le politiche sono \textbf{non modificabili dal S.O}
+  \item Software (cache disco) dove le politiche sono \textbf{sotto controllo dal S.O}
+\end{itemize}
+
+I sistemi multiprogrammati e multiutente richiedono la presenza di \textbf{meccanismi di protezione}. Sono presenti diverse modalità gestite dal \textbf{mode bit}:
+\begin{itemize}
+  \item \textbf{Modalità Kernel}, dove i processi hanno accesso a tutte le istruzioni incluse quelle privilegiate
+  \item \textbf{Modalità Utente}, dove i processi non hanno accesso alle istruzioni privilegiate
+\end{itemize}
+Il processo di caricamento del sistema operativo è chiamato \textbf{bootstrap}. Tutte le volte che avviene un interrupt, l'hardware passa in modalità kernel. E' necessario anche una protezione della memoria, altrimenti i processi potrebbero modificare codice del S.O o processi.\\
+La protezione avviene tramite la \textbf{Memory Management Unit} (MMU). Poichè le istruzioni di I/O sono privilegiate possono essere eseguite solo dal S.O. I processi utente devono fare richieste al S.O tramite \textbf{syscall}.
+
+\section{Scheduler}
+Un \textbf{Process Control Block} (PCB), è formato da:
+\begin{itemize}
+  \item Codice da eseguire
+  \item Dati su cui operare
+  \item Uno stack di lavoro per la gestione di chiamate
+  \item Un insieme di attributi contenenti le informazioni per gestire il processo
+\end{itemize}
+Per gestire i processi viene utilizzata una tabella contenente:
+\begin{itemize}
+  \item I descrittori dei processi (PCB)
+  \item Ogni processo ha un PCB associato
+\end{itemize}
+E' possibile suddividere le informazioni contenute nel descrittore in $3$ aree:
+\begin{itemize}
+  \item Informazione di identificazione di processo
+  \item Informazione di stato del processo
+  \item Informazioni di controllo del processo
+\end{itemize}
+
+Gli stati dei processi possono essere:
+\begin{itemize}
+  \item \textbf{Running}, il processo è in esecuzione
+  \item \textbf{Waiting}, il processo è in attesa di qualche evento esterno
+  \item \textbf{Ready}, il processo può essere eseguito, ma attualmente il processore è impegnato in altre attività
+\end{itemize} 
+Un singolo processo non può eseguire due differenti attività contemporaneamente. Utilizzando i thread possiamo invece eseguire un diverso insieme di istruzioni. Ogni thread possiede:
+\begin{itemize}
+  \item La propria copia dello stato del processore
+  \item Il proprio program counter
+  \item Uno stack separato
+\end{itemize}
+I thread condividono lo spazio di memoria e le risorse allocate 
+degli altri thread dello stesso processo. Un sistema operativo può implementare i thread in due modi:
+\begin{itemize}
+  \item \textbf{User thread} (livello utente)
+  \item \textbf{Kernel thread} (livello kernel)
+\end{itemize}
+
+Gli \textbf{User thread}, vengono supportati sopra il kernel e vengono implementati da una \textbf{thread library} a livello utente (implementazione efficiente ma se il kernel è single-threaded qualsiasi user thread che effettua una chiamata di sistema bloccante causa il blocco dell'intero processo)\\
+I \textbf{Kernel thread}, vengono supportati direttamente dal sistema operativo. Essendo implementate a livello kernel se un thread esegue una operazione di I/O, esso può selezionare un altro thread. Questo causa un risultato più lento.
+
+Si vengono a creare $3$ differenti modelli di multithreading:
+\begin{itemize}
+  \item Many-to-One, un certo numero di user thread vengono mappati su un solo kernel thread
+  \item One-to-One, ogni user thread viene mappato su un kernel thread
+  \item Many-to-Many, un certo numero di user thread vengono mappati su più kernel thread
+\end{itemize}
+
+Per rappresentare uno \textbf{schedule} si usano i diagrammi di Gantt. Gli eventi che possono causare un \textbf{context switch} sono:
+\begin{itemize}
+  \item Quando un processo passa da stato running a stato waiting
+  \item Quando un processo passa dallo stato running a ready
+  \item Quando un processo passa dallo stato waiting allo stato ready
+  \item Quando un processo termina
+\end{itemize}
+Uno scheduler si dice:
+\begin{itemize}
+  \item \textbf{non-preemptive} se il controllo della risorsa viene trasferito solo se l'assegnatario attuale lo cede volontariamente
+  \item \textbf{preemptive} se il controllo della risorsa venga tolto all'assegnatario attuale a causa di un evento
+\end{itemize}
+Il \textbf{throughput} è il numero di processo completati per unità di tempo. Il tempo di \textbf{turnaround} è il tempo che intercorre dalla entrata di un processo alla sua terminazione.
+La \textbf{CPU burst} sono le attività svolte dalla CPU. Mentre quelle \textbf{I/O burst} sono i periodi di attesa.
+
+I principali algoritmi di scheduling sono:
+\begin{itemize}
+  \item \textbf{FIFO} (First In First Out), il processo che arriva per primo, viene servito per primo
+  \item \textbf{SJF} (Shortest Job First), questo algoritmo è \textbf{ottimale} rispetto al tempo di attesa, ma è \textbf{impossibile} da implementare perché non possiamo conoscere la lunghezza del prossimo CPU burst (processo). Esistono due versioni:
+    \begin{enumerate}
+      \item \textbf{Non preemptive}, dove il processo corrente esegue fino al completamento del suo CPU burst
+      \item \textbf{Preemptive}, dove il processo corrente può essere messo nella coda ready, se arriva un processo con CPU burst più breve
+    \end{enumerate}
+  \item \textbf{Round-Robin}, un processo non può rimanere in esecuzione per un tempo superiore alla durata del quanto di tempo
+  \item \textbf{A priorità}, ogni processo è associato a una specifica priorità definita dal \textbf{SO} oppure \textbf{esternamente}. La priorità può essere anche \textbf{statica} dove non cambia durante la vita di un processo e \textbf{dinamica}
+\end{itemize}
+
+\section{Risorse}
+
+Un sistema di elaborazione è composto da un insieme di risorse da assegnare ai processi presenti. Le risorse possono essere suddivise in classi. Se due risorse appartengono alla stessa classe sono equivalenti.\\ 
+Le risorse di una classe vengono dette \textbf{istanze}. Il numero di risorse \textbf{molteplicità}. \\
+Un processo può richiedere solo \textbf{una} risorsa di una specifica classe.\\
+Una risorsa può essere assegnata \textbf{staticamente} e rimarrà valida fino alla terminazione (aree di memoria), oppure \textbf{dinamicamente} cambiando durante la loro esistenza.\\
+Può avere anche una richiesta \textbf{singola} dove si riferisce a una risorsa di una classe, oppure \textbf{multipla}. A sua volta le richieste possono essere \textbf{bloccanti} o \textbf{non bloccanti}. Una singola risorsa \textbf{non può} essere assegnata a più processi.\\
+Una risorsa può essere preemptable (rilascita prima della fine dell'utilizzo).
+Queste condizioni deovno valere tutte contemporanteamnete affinché avvenga un deadlock:
+\begin{itemize}
+  \item \textbf{Mutua esclusione} / non condivisibili, le risorse coinvolte devono essere non condivisibili
+  \item \textbf{Assenza di prerilascio}, le risorse devono essere rilasciate volontariamente
+  \item \textbf{Richieste bloccanti}, un processo che ha già ottenuto una risorsa può richiederne ancora
+  \item \textbf{Attesa circolare}, quando ogni processo richiede una risorsa controllata da un altro processo a catena
+\end{itemize}
+Il grafo di \textbf{Holt} è un grafo \textbf{diretto} e bipartito tra:
+\begin{itemize}
+  \item \textbf{risorse}
+  \item \textbf{processi}
+\end{itemize}
+Questo grafo può essere utilizzato per verificare la presenza di un deadlock.
+Un grafo di Holt si dice \textbf{riducibile} se esiste almeno un nodo processo con solo archi entranti
+
+Possiamo individuare diverse gestioni di deadlock:
+\begin{itemize}
+  \item Deadlock \textbf{detection and recovery}, dato un nodo $n$, l'insieme dei nodi raggiungibili da $n$ viene detto \textbf{insieme di raggiungibilità} di $n$. Se si verifica una deadlock potremmo terminare \textbf{tutti} i processi coinvolti, oppure eliminare un processo alla volta. Vengono salvati dei \textbf{checkpoint} per salvare lo stato precedente, ed eventualmente fare una \textbf{rollback}.
+  \item Deadlock \textbf{prevention / avoidance}, per evitare il deadlock si elimina una delle $4$ condizioni di deadlock, prima di assegnare una risorsa si controlla se l'operazione può portare al pericolo di deadlock (\textbf{avoidance})
+  \item \textbf{Ostrich} algorithm (struzzo), è la soluzione più adottata nei sistemi Unix. Consiste nell'ignorare i deadlock come se non si possano mai verificare.
+\end{itemize}
+Il costo per evitare i deadlock può essere troppo elevato.
+Per capire il concetto di stallo si è sviluppato l'algoritmo del \textbf{banchiere}.
+
+\section{Memoria}
+La parte del SO che gestisce la memoria principale si chiama \textbf{memory manager}. Essa si occupa di tenere traccia della memoria libera occupata e allocare/deallocare memoria ai processi. La memory manager è \textbf{software} mentre la Memory Management Unit (MMU) è \textbf{hardware}.\\
+Con il termine \textbf{binding} si indica l'associazione di indirizzi logici di memoria agli indirizzi fisici. Esso può avvenire:
+\begin{itemize}
+  \item Durante la compilazione, dove gli indirizzi rimarranno gli stessi ad ogni esecuzione del programma ma non supporta (kernel) la multiprogrammazione
+  \item Durante il caricamento, dove gli indirizzi potrebbero cambiare ad ogni allocazione, il \textbf{loader} si preoccupa di aggiornare i riferimenti agli indirizzi di memoria (\textbf{rilocabile})
+  \item Durante l'esecuzione, gli indirizzi di memoria effettivi vengono gestiti dalla \textbf{MMU}
+\end{itemize}
+
+Gli indirizzi possono essere:
+\begin{itemize}
+  \item \textbf{Logici}, dove si utilizzano riferimenti a uno spazio di indirizzamento
+  \item \textbf{Fisico}, dove la MMU traduce gli indirizzi logici in fisici
+\end{itemize}
+Per effettuare la traduzione degli indirizzi la MMU utilizza un \textbf{registro limite} ($\geq 1000$) che andra a tradurre l'indirizzo in uno fisico (24234).\\
+E' possibile caricare alcuni routine di libreria solo quando vengono richiamate attraverso il \textbf{linking dinamico}.\\
+La allocazione può essere \textbf{contigua} quando tutto lo spazio assegnato ad un processo è formato da celle consecutive. La MMU basata su rilocazione gestisce solo allocazioni contigue.
+L'allocazione di memoria oltre a essere \textbf{statica} o \textbf{dinamica}, può avere:
+\begin{itemize}
+  \item Partizioni \textbf{fisse}, dove ogni processo viene caricato in una delle partizioni libere sufficientemente grande. Questo tipo di gestione causa \textbf{frammentazione interna} causando spreco di memoria per spazio non utilizzato 
+  \item Partizioni \textbf{dinamiche}, dove la memoria disponibile viene assegnata ai processi che ne fanno richiesta. Problema di questa implementazione è la \textbf{frammentazione esterna}, poiché lo spazio libero apparerebbe suddiviso in piccole aree
+\end{itemize}
+La frammentazione interna dipende dall'uso di unità di allocazione di dimensione diversa da quella richiesta, mentre la frammentazione esterna deriva dal susseguirsi di allocazioni e deallocazioni. Se è possibile riallocare i processi durante l'esecuzione è possibile procedere alla \textbf{compattazione} della memoria dove andiamo a spostare i processi per risolvere il problema della frammentazione esterna.\\
+E' una operazione onerosa e i processi devono essere fermi durante la compattazione.\\
+Quando la memoria è assegnata dinamicamente abbiamo bisogno di una struttura dati per mantenere informazioni sulle zone libere e occupate. E' possibile usare \textbf{mappe di bit, liste con puntatori, ecc}. L'operazione di selezione di un blocco può essere:
+\begin{itemize}
+  \item \textbf{First fit}, dove si scorre la lista dei blocchi liberi fino a quando non trova il primo segmento vuoto grande abbastanza da contenere il processo
+  \item \textbf{Next fit}, come First fit, ma si parte dal punto dove si era fermato all'ultima allocazione. L'operazione di selezione di un blocco può essere (peggiore di First fit)
+  \item \textbf{Best fit}, seleziona il più piccolo fra i blocchi liberi presenti in memoria
+  \item \textbf{Worst fit}, seleziona il più grande fra i blocchi presenti in memoria
+\end{itemize}
+
+Ad oggi viene utilizzato l'approccio della \textbf{Paginazione}. Ogni spazio di indirizzamento logico di un processo vinee suddiviso in un insieme di blocchi di dimensione fissa chiamati \textbf{pagine}. La memoria fisica in egual modo (\textbf{frame}).\\
+La dimensione delle pagine deve essere una potenza di due. Con pagine \textbf{piccole}, la tabella cresce di dimensioni, con pagine \textbf{grandi} la frammentazione può essere considerevole. Valori tipici (1KB,2KB,4KB). \\
+La tabella delle pagine può essere contenuta in:
+\begin{itemize}
+  \item \textbf{Registri dedicati}, troppo costosa
+  \item \textbf{Totalmente in memoria}, troppi accessi in memoria
+\end{itemize}
+Un \textbf{Translation lookaside buffer} (TLB) è costituito da un insieme di registri associativi ad alta velocità, ogni registro è diviso in due parti, chiave e valore, essa funge da \textbf{cache}.\\
+Nella operazione di \textbf{lookup} viene richiesta la ricerca di una chiave che se trovata ritorna un TLB \textbf{hit} altrimenti un \textbf{miss}.\\
+Nella \textbf{segmentazione} (alternativa alla paginazione) la memoria associata ad un processo è suddivisa in aree differenti dal punto di vista funzionale (aree eseguibili, aree dati, area stack) ed ha dimensione variabile. Spetta al programmatore o al compilatore la suddivisione di un programma in segmenti. Ogni segmento ha un nome con dimensione maggiore (64KB).\\
+E' possibile adottare \textbf{entrambe le tecniche} a patto che la MMU supporti sia la segmentazione sia la paginazione
+
+La \textbf{memoria virtuale}, è la tecnica che permette l'esecuzione di processi che non sono completamente in memoria. Ogni processo ha accesso ad uno \textbf{spazio di indirizzamento virtuale}. Se la memoria è piena, si sposta in memoria secondaria i dati contenuti in memoria principale.\\
+La paginazione a richiesta (\textbf{demand paging}) utilizza la tecnica della paginazione ammettendo che alcune pagine si trovino in memoria secondaria. Quando un processo tenta di accedere ad una pagina non in memoria il processore genera un \textbf{page fault}. Il \textbf{pager} si occuperà di caricare la pagina mancante.\\
+Con \textbf{swap} si intende l'operazione di copiare l'intera area di memoria usata da un processo:
+\begin{itemize}
+  \item Dalla memoria secondaria alla memoria principale (\textbf{swap-in})
+  \item Dalla memoria principale alla memoria secondaria (\textbf{swap-out})
+\end{itemize}
+Utilizziamo il termine \textbf{swap area} per indicare l'area del disco utilizzata per ospitare le pagine in memoria secondaria.
+Vengono utilizzati algoritmi di rimpiazzamento per tenere pagine in memoria ad esempio \textbf{FIFO}. \\
+Non è detto che aumentando il numero di frame, il numero di page fault diminuisca questo fenomeno si chiama \textbf{Anomalia di Belady}.
+Un algoritmo ottimale dovrebbe selezionare come pagina vittima una pagina che non sarà più acceduta o la pagina che verrà acceduta nel futuro più lontano.
+Esso però è un algoritmo teorico perché richiederebbe la conoscenza a priori dei futuri programmi.\\
+Algoritmo \textbf{LRU}, seleziona come pagina vittima la pagina che è stata usata meno recentemente nel passato.
+Algoritmo \textbf{LFU}, mantiene un contatore del numero di accessi ad una pagina. Viene messa in cima la pagina più usata.\\
+Un processo si dice che è in \textbf{trashing} quando spende più tempo per la paginazione che per l'esecuzione. Si definisce \textbf{working set di finestra} $\Delta$ l'insieme delle pagine accedute nei più recenti riferimenti $\Delta$.
+
+\section{Secondaria}
+Tecniche di gestione dei dispositivi di I/O:
+\begin{itemize}
+  \item \textbf{Buffering}, gestire una differenza di velocità tra il produttore e il consumatore
+  \item \textbf{Caching}, mantiene una copia in memoria primaria di informazioni che si trovano in memoria secondaria
+  \item \textbf{Spooling}, è un buffer che mantiene in output per un dispositivo che non può accettare flussi di dati distinti (stampanti)
+  \item \textbf{I/O scheduling}
+\end{itemize}
+Un disco è composto da un insieme di piatti, suddivisi in tracce, le quali sono suddivise in settori. I dischi sono caratterizzati da $3$ parametri:
+\begin{itemize}
+  \item La velocità di rotazione
+  \item Il tempo di seek, che indica il tempo medio affinché la testina si sposti sulla traccia desiderata
+  \item La velocità di trasferimento
+\end{itemize}
+Anche il gestore del disco utilizza politiche di gestione:
+\begin{itemize}
+  \item \textbf{FCFS}, FIFO
+  \item \textbf{SSTF}, seleziona la richiesta che prevede il minor spostamento della testina
+  \item \textbf{LOOK}, ad ogni istante, la testina è associata ad una direzione che si sposta
+  \item \textbf{C-LOOK}, ha lo stesso principio del LOOK ma la scansione avviene in una sola direzione
+\end{itemize}
+
+Per aumentare la velocità di gestione del disco si utilizzano tecniche di \textbf{RAID}. \textbf{Redundant Array of Independent Disks} è uno standard industriale per l'utilizzo di più dischi in parallelo (da 0-6).\\
+L'utilizzo di più dischi in parallelo aumenta la probabilità di guasti nel sistema. Possiamo individuare le seguenti tipologie di RAID:
+\begin{enumerate}
+  \item \textbf{RAID 0}, può essere utilizzato per applicazioni in cui l'affidabilità non è un grosso problema, ma lo sono la velocità e il basso costo. I dati vengono distribuiti su più dischi. Le richieste possono essere eseguite in parallelo. I dati nel disco logico vengono suddivisi in \textbf{strip} (settori). \textbf{Non} presenta \textbf{ridondanze}.
+  \item \textbf{RAID 1}, la ridondanza è ottenuta duplicando tutti i dati su due insiemi indipendenti di dischi. In questo modo salvando su due strip il costo \textbf{raddoppia}. Una richiesta può essere servita da uno qualsiasi dei dischi. Il \textbf{recovery} è semplice, se un disco si guasta, i dati sono accessibili dall'altro disco
+  \item \textbf{RAID 4}, si utilizza il meccanismo di \textbf{data striping} con strip grandi. Viene usato uno \textbf{strip di parita} calcolato bit per bit che andrà ad occupare un intero settore del disco.\\ Ad esempio il primo strip da $0-3$ il secondo da $4-7$, ecc. In questo modo se il disco corrispondente è guasto si individua lo strip e si effettua la lettura di tutti gli strip rimasti, e tramite il disco di parità si ottiene lo strip mancante
+  \item \textbf{RAID 5}, come RAID $4$ ma i blocchi di parità sono sparsi fra i vari dischi. In questo modo non esiste un disco di parità che diventa un bottleneck
+  \item \textbf{RAID 6}, come RAID $5$ ma si utilizzano \textbf{due} strip di parità invece di uno. In questo modo viene aumentata l'affidabilità perché è necessario il guasto di $3$ dischi affinchè i dati non siano più utilizzabili
+\end{enumerate}
+
+\newpage
+
+\section{File System}
+Il \textbf{file system} ha il compito di astrarre la complessità di utilizzo dei diversi media proponendo una interfaccia per i sistemi di memorizzazione. Dal punto di vista dell'utente un file system è compost da due elementi:
+\begin{itemize}
+  \item \textbf{file}
+  \item \textbf{directory}
+\end{itemize}
+Esistono $3$ tecniche principali per identificare il tipo di un file:
+\begin{enumerate}
+  \item Estensioni
+  \item Utilizzo di un attributo
+  \item Magic number, sequenza di bit posta prima della sequenza di dati, utile per definire il formato in cui i dati sono memorizzati
+\end{enumerate}
+Abbiamo diversi metodi di accesso ad un file:
+\begin{itemize}
+  \item \textbf{Sequenziale} (read, write)
+  \item \textbf{Ad accesso diretto} (read pos, write pos)
+  \item \textbf{Indicizzato} (read key, write key)
+\end{itemize}
+In un SO multitasking, i processi accedono ai file indipendentemente. Le modifiche al contenuto di un file vengono rese visibili agli altri processi immediatamente. Esistono due tipi di condivisione del file:
+\begin{itemize}
+  \item Condivisione del puntatore alla posizione corrente nel file (\textbf{fork})
+  \item Condivisione con distinti puntatori alla posizione corrente
+\end{itemize}
+Il primo settore dei dischi è il \textbf{Master Boot Record} (MBR) utilizzato per:
+\begin{itemize}
+  \item fare il \textbf{boot} del sistema
+  \item Contiene la \textbf{partition table}
+  \item Contiene l'indicazione della partizione attiva
+\end{itemize}
+Una partizione caricata dal \textbf{Boot block} è formata da:
+\begin{itemize}
+  \item \textbf{Superblock}, contiene informazioni sul tipo di file system e la sua organizzazione
+  \item \textbf{Tabella per la gestione dello spazio libero}, contiene informazioni sui blocchi liberi
+  \item \textbf{Tabella per la gestione dello spazio occupato}, contiene informazioni sui file presenti nel sistema
+  \item \textbf{Root dir}, directory radice del file system
+\end{itemize}
+La \textbf{FAT} in sé mantiene la traccia delle aree del disco disponibili e di quelle già usate dai file e dalle directory.\\
+Il problema dell'\textbf{allocazione} è il problema del come scegliere i blocchi dati da utilizzare per un file. Possiamo individuare diverse tecniche di allocazione:
+\begin{enumerate}
+  \item \textbf{Allocazione contigua}, i file sono memorizzati in sequenze contigue di blocchi di dischi. Problema della frammentazione
+  \item \textbf{Allocazione concatenata}, ogni file è costituito da una lista concatenata di blocchi. Ogni blocco contiene un puntatore al blocco successivo. Il descrittore del file contiene i puntatori al primo e all'ultimo elemento della lista. Vengono effettuate molte opererazioni di \textbf{seek}
+  \item \textbf{Allocazione basata su fat}, invece di utilizzare parte del blocco dati per contenere il puntatore al blocco successivo si crea una tabella unica con un elemento per blocco (\textbf{cluster}). La scansione richiede anche la lettura della FAT, aumentando il numero di accessi al disco (chiavette)
+  \item \textbf{Allocazione indicizzata}, l'elenco dei blocchi che compongono un file viene memorizzato in un blocco indice. Per accedere ad un file, si carica in memoria la sua area indice e si utilizzano i puntatori contenuti (\textbf{puntatori raccolti in un blocco}).\\ L'ultimo elemento del blocco indice non punta al blocco dati ma al blocco indice successivo. La dimensione del blocco indice determina l'ampiezza massima del file
+\end{enumerate}
+In \textbf{UNIX} ogni file è associato ad un \textbf{i-node}. Un i-node è una struttura dati contenente gli attributi del file, e un indice di blocchi diretti e indiretti. \\
+Per gestire lo spazio libero vengono usate le \textbf{mappe di bit}. Ogni blocco corrisponde ad un \textbf{bit} nella bitmap. I blocchi libero sono indicati da $0$ e i blocchi occupati a $1$. Questa tecnica può richiedere molto spazio.\\
+I blocchi liberi invece vengono mantenuti in una \textbf{lista concatenata}. L'allocazione di un'area di ampie dimensioni è costosa.\\
+Le liste concatenate possono anche essere gestite a \textbf{blocchi}, in questo modo è sufficiente mantenere in memoria solo un blocco contenente elementi liberi.
+\begin{itemize}
+  \item Blocchi $1KB$
+  \item Dimensione partizione $16GB$
+  \item Mappa di bit $2MB$
+  \item Lista concatenata (FAT) $48MB$
+  \item Lista concatenata (blocchi) spazio blocchi liberi
+\end{itemize}
+Scegliere la dimensione di un cluster:
+\begin{itemize}
+  \item \textbf{Cluster grandi}: velocità alta, frammentaizone interna
+  \item \textbf{Cluster piccoli}: velocità bassa, minore frammentazione
+\end{itemize}
+ Una directory è un \textbf{file speciale} contenente informazioni sui file contenuti nella directory. Una directory è suddivisa in un certo numero di \textbf{directory entry}. Gli attributi possono essere inseriti nelle directory entry oppure nell'\textbf{i-node} (UNIX).\\
+ Una directory può essere implementata in:
+ \begin{itemize}
+   \item \textbf{Lista lineare}
+   \item \textbf{Tabella hash}
+ \end{itemize}
+Due implementazioni possibili:
+\begin{itemize}
+  \item \textbf{Link simbolici}, dove viene creato un riferimento al file in questione. Quando si scopre che si tratta di un link esso viene \textbf{risolto}
+  \item \textbf{Hard link}, dove le informazionial file sono presenti in entrambe le directory. Se viene modificato il file, esso cambierà in entrambi. E' necessario utilizzare la tecnica degli i-node i quali conteggiano il \textbf{numero di riferimenti}.
+\end{itemize}
+I meccanismi di caching possono causare inconsistenza nel file system. Nei file system basati su \textbf{log} ogni aggiornamente è trattato come una \textbf{transazione}. Essa consente di ripristinare uno stato corrente.
+
+\section{Sicurezza}
+
+L'insieme dei meccanismi utilizzati per trasformare messaggi in chiaro (\textbf{plaintext}) in un messaggio cifrato (\textbf{ciphertext}). Nella crittografia a \textbf{chiave privata} la chiave per criptare i messagi è la stessa usata per decriptarli. Gli algoritmi utilizzati sono molto veloci.
+La crittografia a \textbf{chiave pubblica} ha due chiavi distinte:
+\begin{itemize}
+  \item \textbf{chiave pubblica}, utilizzata per criptare i messaggi in chiaro
+  \item \textbf{chiave privata}, utilizzata per decriptare i messaggi cifrati
+\end{itemize}
+Per criptare le password viene utilizzato il meccanismo del \textbf{salt} dove prima di essere criptate e memorizzate nel file di password, le password vengono concatenate con un numero casuale. Una volta le password venivano salvate in chiaro nel file \texttt{/etc/passwd}. 
+\textbf{Pluggable Authentication Module} (PAM) è un servizio di autenticazioni, basato su file di configurazione.\\
+L'insieme di meccanismi che separano il \textbf{gestore} (nucleo SO) dalle \textbf{risorse gestite} (processi, risorse) è realizzato mediante:
+\begin{itemize}
+  \item \textbf{Mode bit}, meccanismo degli interrupt
+  \item \textbf{Protezione}, memoria dispositivi
+\end{itemize}
+Le \textbf{autorizzazioni} sono l'insieme di meccanismi e politiche con cui il SO decide se un soggetto ha il permesso di eseguire una determinata azione. Vengono realizzati tramite meccanismi software:
+\begin{itemize}
+  \item Trusted Computing Base, Reference Monitor
+  \item \textbf{ACL}, matrice di accesso
+\end{itemize}
+Molti SO controllano i diritti solo al momento dell'apertura. Non vengono controllate le operazioni successive (principio di \textbf{accesso mediato}). Un sistema non dovrebbe concedere permessi in base ad una singola condizione, (principio di \textbf{accesso mediato})  (\textbf{UNIX}). Nessun soggetto ha diritti per default (principio di \textbf{failsafe default}).\\
+Nelle \textbf{ACL} ad ogni oggetto viene associata una lista di elementi \textit{<dominio, diritti di accesso>}. L'associazione soggetto/dominio può essere \textbf{statica} o \textbf{dinamica}. UNIX ha liste di $3$ elementi: owning user, owning group, others.
+Nelle \textbf{capability} ad ogni dominio viene associata una \textbf{lista} di capability, ovvero coppie \texttt{<oggetti, diritti di accesso>}. I processi mantengono le capability e le presentano quali credenziali per accedere all'oggetto. Sono una sorta di chiave per l'accesso alla serratura che protegge l'oggetto.
+Le capability possono essere mantenute:
+\begin{itemize}
+  \item nello spazio kernel
+  \item nello spazio utente
+\end{itemize}
+Ogni processo possiede $6$ o più ID associate ad esso. Le \textbf{umask} sono maschere utilizzate per la creazione dei file (triple). In un file system i permessi di ogni oggetto vengono rappresentati come una \textbf{ACL}.\\
+Una ACL consiste in un insieme di \textbf{ACL entry}. Ogni user class è rappresentata da una \textbf{AC entry}. Ogni file è associato ad una \textbf{access ACL}, esse determinano i diritti di accesso. Se una directory non ha default ACL, si utilizza il meccanismo tradizionale UNIX (umask, etc). Le ACL sono implementate come \textbf{EA} (Extended attribute) con coppia \texttt{name = value}.\\
+File system diversi hanno supporti per ACL diversi. Tutti supportano le POSIX ACL. Ogni processo ha $3$ \textbf{bitmap} che rappresentano capability:
+\begin{enumerate}
+  \item \textbf{Effective Set}, contiene le capability che il processo possiede ad un certo istante
+  \item \textbf{Permitted Set}, contiene il massimo insieme di capability che un processo possiede
+  \item \textbf{Inheritable Set}, continee il sottoinsieme di capability che un processo può lasciare in eredità ai suoi sottoprocessi
+\end{enumerate}
+Nelle \textbf{Discrectionary Access Control} (DAC) i controlli di accesso sono basati sull'identità dei soggetti e sui permessi di accesso assegnati agli oggetti (sufficiente quando il sistema ha \textbf{dati} che devono essere protetti da \textbf{abusi del proprietario)}. Nei modelli non discrezionali \textbf{Mandatory, MAC} il controllo degli accessi è bassato su regole e informazioni associate ai soggetti ed agli oggetti.
+  
+\end{document}
+
