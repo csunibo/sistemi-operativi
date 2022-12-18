@@ -107,7 +107,7 @@ La \textbf{Direct Memory Access} (DMA), attiva l'operazione di I/O specificando 
 La \textbf{Random Access Memory} (RAM), assieme ai registrti è l'unico spazio di memorizzazione che può essere acceduto direttamente dal processore (\textbf{volatile}). Nei sistemi moderni l'accesso avviene tramite \textbf{MMU} (trasforma gli indirizzi logici in fisici)\\
 La \textbf{Read Only Memory} (ROM), memoria accessibile solo in lettura\\
 In un disco le operazioni di \textbf{seek} corrispondono allo spostamento del pettine di testa sul disco. E' una operazione costosa e deve essere limitata. A differenza delle SSD \textbf{non} hanno un numero di cicli di scrittura limitato\\
-Un meccanismo di \textbf{caching} consiste nel memorizzare \texbtf{parzialmente} i dati di una memoria in una seconda più costosa ma più efficiente. Maggiori richiesta aumentano prestazioni. Il caching può essere:
+Un meccanismo di \textbf{caching} consiste nel memorizzare \textbf{parzialmente} i dati di una memoria in una seconda più costosa ma più efficiente. Maggiori richiesta aumentano prestazioni. Il caching può essere:
 \begin{itemize}
   \item Hardware (cache CPU) dove le politiche sono \textbf{non modificabili dal S.O}
   \item Software (cache disco) dove le politiche sono \textbf{sotto controllo dal S.O}
@@ -119,7 +119,7 @@ I sistemi multiprogrammati e multiutente richiedono la presenza di \textbf{mecca
   \item \textbf{Modalità Utente}, dove i processi non hanno accesso alle istruzioni privilegiate
 \end{itemize}
 Il processo di caricamento del sistema operativo è chiamato \textbf{bootstrap}. Tutte le volte che avviene un interrupt, l'hardware passa in modalità kernel. E' necessario anche una protezione della memoria, altrimenti i processi potrebbero modificare codice del S.O o processi.\\
-La protezione avviene tramite la \textf{Memory Management Unit} (MMU). Poichè le istruzioni di I/O sono privilegiate possono essere eseguite solo dal S.O. I processi utente devono fare richieste al S.O tramite \textbf{syscall}.
+La protezione avviene tramite la \textbf{Memory Management Unit} (MMU). Poichè le istruzioni di I/O sono privilegiate possono essere eseguite solo dal S.O. I processi utente devono fare richieste al S.O tramite \textbf{syscall}.
 
 \section{Scheduler}
 Un \textbf{Process Control Block} (PCB), è formato da:
@@ -183,7 +183,7 @@ Uno scheduler si dice:
   \item \textbf{preemptive} se il controllo della risorsa venga tolto all'assegnatario attuale a causa di un evento
 \end{itemize}
 Il \textbf{throughput} è il numero di processo completati per unità di tempo. Il tempo di \textbf{turnaround} è il tempo che intercorre dalla entrata di un processo alla sua terminazione.
-La \textbf{CPU burst} sono le attività svolte dalla CPU. Mentre quelle \texbtf{I/O burst} sono i periodi di attesa.
+La \textbf{CPU burst} sono le attività svolte dalla CPU. Mentre quelle \textbf{I/O burst} sono i periodi di attesa.
 
 I principali algoritmi di scheduling sono:
 \begin{itemize}
@@ -249,7 +249,7 @@ La allocazione può essere \textbf{contigua} quando tutto lo spazio assegnato ad
 L'allocazione di memoria oltre a essere \textbf{statica} o \textbf{dinamica}, può avere:
 \begin{itemize}
   \item Partizioni \textbf{fisse}, dove ogni processo viene caricato in una delle partizioni libere sufficientemente grande. Questo tipo di gestione causa \textbf{frammentazione interna} causando spreco di memoria per spazio non utilizzato 
-  \item Partizioni \textbf{dinamiche}, dove la memoria disponibile viene assegnata ai processi che ne fanno richiesta. Problema di questa implementazione è la \texbtf{frammentazione esterna}, poiché lo spazio libero apparerebbe suddiviso in piccole aree
+  \item Partizioni \textbf{dinamiche}, dove la memoria disponibile viene assegnata ai processi che ne fanno richiesta. Problema di questa implementazione è la \textbf{frammentazione esterna}, poiché lo spazio libero apparerebbe suddiviso in piccole aree
 \end{itemize}
 La frammentazione interna dipende dall'uso di unità di allocazione di dimensione diversa da quella richiesta, mentre la frammentazione esterna deriva dal susseguirsi di allocazioni e deallocazioni. Se è possibile riallocare i processi durante l'esecuzione è possibile procedere alla \textbf{compattazione} della memoria dove andiamo a spostare i processi per risolvere il problema della frammentazione esterna.\\
 E' una operazione onerosa e i processi devono essere fermi durante la compattazione.\\
@@ -416,15 +416,15 @@ Le \textbf{autorizzazioni} sono l'insieme di meccanismi e politiche con cui il S
   \item Trusted Computing Base, Reference Monitor
   \item \textbf{ACL}, matrice di accesso
 \end{itemize}
-Molti SO controllano i diritti solo al momento dell'apertura. Non vengono controllate le operazioni successive (principio di \textbf{accesso mediato}). Un sistema non dovrebbe concedere permessi in base ad una singola condizione, (principio di \textbf{accesso mediato})  (\textbf{UNIX}). Nessun soggetto ha diritti per default (principio di \texbtf{failsafe default}).\\
-Nelle \textbf{ACL} ad ogni oggetto viene associata una lista di elementi \texttt{<dominio, diritti di accesso>}. L'associazione soggetto/dominio può essere \textbf{statica} o \textbf{dinamica}. UNIX ha liste di $3$ elementi: owning user, owning group, others.
+Molti SO controllano i diritti solo al momento dell'apertura. Non vengono controllate le operazioni successive (principio di \textbf{accesso mediato}). Un sistema non dovrebbe concedere permessi in base ad una singola condizione, (principio di \textbf{accesso mediato})  (\textbf{UNIX}). Nessun soggetto ha diritti per default (principio di \textbf{failsafe default}).\\
+Nelle \textbf{ACL} ad ogni oggetto viene associata una lista di elementi \textit{<dominio, diritti di accesso>}. L'associazione soggetto/dominio può essere \textbf{statica} o \textbf{dinamica}. UNIX ha liste di $3$ elementi: owning user, owning group, others.
 Nelle \textbf{capability} ad ogni dominio viene associata una \textbf{lista} di capability, ovvero coppie \texttt{<oggetti, diritti di accesso>}. I processi mantengono le capability e le presentano quali credenziali per accedere all'oggetto. Sono una sorta di chiave per l'accesso alla serratura che protegge l'oggetto.
 Le capability possono essere mantenute:
 \begin{itemize}
   \item nello spazio kernel
   \item nello spazio utente
 \end{itemize}
-Ogni processo possiede $6$ o più ID associate ad esso. Le \textbf{umask} sono maschere utilizzate per la creazione dei file (triple). In un file system i permessi di ogni oggetto vengono rappresentati come una \texbtf{ACL}.\\
+Ogni processo possiede $6$ o più ID associate ad esso. Le \textbf{umask} sono maschere utilizzate per la creazione dei file (triple). In un file system i permessi di ogni oggetto vengono rappresentati come una \textbf{ACL}.\\
 Una ACL consiste in un insieme di \textbf{ACL entry}. Ogni user class è rappresentata da una \textbf{AC entry}. Ogni file è associato ad una \textbf{access ACL}, esse determinano i diritti di accesso. Se una directory non ha default ACL, si utilizza il meccanismo tradizionale UNIX (umask, etc). Le ACL sono implementate come \textbf{EA} (Extended attribute) con coppia \texttt{name = value}.\\
 File system diversi hanno supporti per ACL diversi. Tutti supportano le POSIX ACL. Ogni processo ha $3$ \textbf{bitmap} che rappresentano capability:
 \begin{enumerate}
