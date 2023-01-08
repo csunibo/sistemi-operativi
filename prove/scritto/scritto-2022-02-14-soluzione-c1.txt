@@ -1,24 +1,73 @@
-monitor semval<T> {
-  // invariant: initial + nV - nP >= 0
-  int initial, nP, nV = 0,0,0;
-  condition cnd;
-  Stack<T> s; // LIFO
+//ENTRAMBE SONO CORRETTE MA QUELLA DOPO E' MEGLIO
+/*
+link del gruppo telegram:	https://t.me/+b8Txn35l8GY1NzAy
+link della richiesta:		https://t.me/c/1449061520/607
+link del commento:		https://t.me/c/1449061520/621
+*/
 
-  constructor(int i) {
-    initial = i
-  }
+//Proposta: (link richiesta: https://t.me/c/1449061520/611)
+//nome file: D_sem+data.txt
 
-  procedure entry T P() {
-    if(initial + nV - nP+1 < 0)
-      cnd.wait();
-    ++nP;
-    return s.pop();
-  }
+//mi sono ispiratə a pag 163 di http://www.cs.unibo.it/~renzo/so/materiale2223/concorrenza2223.pdf
+//ovvero implementazione dei semafori tramite monitor + modifiche per aggiungere dati
 
-  procedure entry void V(T val) {
-    s.push(val);
-    ++nV;
-    if(inital + nV - nP >= 0)
-      cnd.signal();
-  }
+monitor DataSemaphore { 
+	Stack<datatype> s;		// <-- aggiunta
+	int value; 
+	condition c; /* value > 0 */
+
+	procedure entry datatype dP(void) { 
+		if (value == 0) 
+			c.wait(); 
+		value--;
+		return s.pop(data);	// <-- aggiunta
+	}
+	procedure entry void dV() { 
+		value++;
+		s.push();		// <-- aggiunta
+		c.signal();
+	} 
+	DataSemaphore(void) { 
+		value = 0; 
+	} 
 }
+
+/*
+Commento del professore (Renzo Davoli) su questa proposta (link: https://t.me/c/1449061520/621 ):
+"D: la soluzione: concisa e elegante."
+*/
+
+-----------------------------------------------------------------------------------------------------------------------------------
+
+//Migliore Proposta: (link richiesta: https://t.me/c/1449061520/614 )
+
+monitor semdata{
+	condition ok;
+	Stack<T> s; //LIFO
+	
+	T dP(void){
+		if(s.empty()){
+			ok.wait();
+		}
+		return s.pop();
+	}
+
+	void dV(T data){
+		s.push(data);
+		ok.signal();
+	}
+}
+
+/* Discussione su telegram:
+studente O: "l'esercizio chiede di non assegnare il valore iniziale nel costruttore"
+studente L: "E di considerarlo 0 quindi il costruttore fa solo l'inizializzazione a 0 senza prendere in input altri valori."
+studente O: (PROPONE la sol) "ho provato senza costruttore. però non sono sicura che questa soluzione è giusta"
+studente L: "A me sembra corretta, è anche più semplice di tutte le proposte fin ora."
+studente O: "hai controllato?"
+studente L: "no ma value del D è come se contasse quanti dati ci sono nello stack,
+	quindi la tua proposta ha lo stesso funzionamento dei semafori, in più rispetta le richieste.
+	E la richiesta dice che l'invariante deve essere lo stesso dei semafori, che mi sembra rispettato."
+studente O: "aspettiamo per la risposta del prof"
+COMMENTO DEL PROF (link: https://t.me/c/1449061520/622):
+	"avete ragione, la soluzione è corretta e migliore anche della D proposta prima."
+*/

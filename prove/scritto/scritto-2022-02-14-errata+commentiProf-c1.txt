@@ -1,0 +1,138 @@
+//FILE CONTENENTE PROPOSTE SBAGLIATE E COMMENTATE DAL PROFESSORE SU TELEGRAM
+
+/*Commento generale del professore (Renzo Davoli) su telegram:
+"Commento generale: l'invariante serve per spiegare il comportamento, non è necessaio che nP e nV compaiano nel codice..."
+
+link del gruppo telegram:	https://t.me/+b8Txn35l8GY1NzAy
+link della richiesta:		https://t.me/c/1449061520/607
+link del commento:		https://t.me/c/1449061520/621
+*/
+
+-----------------------------------------------------------------------------------------------------------------------------------
+
+//Proposta precedentemente letta qui ("ERRATA") (link richiesta: https://t.me/c/1449061520/608 )
+//nome file: A_previously.txt
+
+monitor semval<T> {
+  // invariant: initial + nV - nP >= 0
+  int initial, nP, nV = 0,0,0;
+  condition cnd;
+  Stack<T> s; // LIFO
+
+  constructor(int i) {
+    initial = i
+  }
+
+  procedure entry T P() {
+    if(initial + nV - nP+1 < 0)
+      cnd.wait();
+    ++nP;
+    return s.pop();
+  }
+
+  procedure entry void V(T val) {
+    s.push(val);
+    ++nV;
+    if(inital + nV - nP >= 0)
+      cnd.signal();
+  }
+}
+
+/*
+Commento di alcuni studenti:
+Secondo noi è sbagliata perchè il testo dice 'Non è previsto assegmento di valore iniziale nel costruttore'.
+
+Commento del professore (Renzo Davoli) su questa proposta:
+"A: il costruttore non doveva esserci. (le funzioni devono chiamarsi dP e dV!)
+la condizione per la dP era meglio scriverla come: if (initial + nV - nP <= 0)
+la condizione della dV deve essere if (initial + nV - nP > 0)
+se no il valore del semaforo (initial + nV - nP) può diventare -1."
+*/
+
+-----------------------------------------------------------------------------------------------------------------------------------
+
+//Seconda proposta ("ERRATA") (link richiesta: https://t.me/c/1449061520/609 )
+//nome file: B_invariante_prima.txt
+
+Monitor semdata{
+	Condition ok2go;
+	Stack s; //per mem valori dV
+	int nV = 0, nP = 0;
+
+	Datatype dP(void) {
+		While (nP <= nV) {
+			Int c = s.pop();
+			Ok2go.wait();
+			nP++;
+			Return c;
+		}
+	}
+	void dV(datatype data) {
+		While (nP <= nV) {
+			val ++;
+			s.push(data);
+			Ok2go.signal();
+			nV++;
+		}
+	}
+	semdata() {
+		nV = 0;
+		nP = 0;
+		val = 0;
+	}
+}
+
+/*
+Commento del professore (Renzo Davoli) su questa proposta:
+"B: Se nP <= nV e viene fatta una dV si ottiene un loop infinito, data viene inserito infinite volte nello stack, incrementa un 'val' mai definito né usato, manda una signal che non blocca mai e incrementa dV rendendo ancora piu' vera la condizione del loop.
+In dP c'è un while che non può mai essere eseguito più di una volta, l'ultima istrusione del loop è return incondizionato!
+Se nP > nV entrambe le funzioni non fanno nulla.
+La proposta B denota gravissimi problemi di conoscenza di programmazione e algoritmi."
+*/
+
+-----------------------------------------------------------------------------------------------------------------------------------
+
+//Terza proposta ("ERRATA") (link richiesta: https://t.me/c/1449061520/610 )
+//nome file: C_invariante_dopo.txt
+//ottenuta modificando B_invariante_prima.txt
+
+Monitor semdata{
+	Condition ok2go;
+	Stack s; //per mem valori dV
+	int nV = 0, nP = 0;
+
+	Datatype dP(void) {
+	While (nP <= nV)
+		if(val == 0) {			// <-- aggiunta
+			Int c = s.pop();
+			Ok2go.wait();
+			nP++;
+			Return c;
+		} else				// <-- aggiunta
+			val --;			// <-- aggiunta
+	}
+	void dV(datatype data) {
+		While (nP <= nV) {
+			val ++;
+			s.push(data);
+			Ok2go.signal();
+			nV++;
+		}
+	}
+	semdata() {
+		nV = 0;
+		nP = 0;
+		val = 0;
+	}
+}
+
+/*
+Commento del professore (Renzo Davoli) su questa proposta:
+"C: la dV è quella della proposta B, con gli stessi problemi.
+Se nP > nV entrambe le funzioni non fanno nulla.
+I "while" sono da eliminare, nP e nV non servono a niente.  comunque pop deve essere fatto dopo la wait altrimenti può operare su uno stack vuoto.
+Per come è scritto il codice della dP se nP <= nV qualsiasi sia il valore positivo di val, val viene decrementato (val--) fino a quando val diviene 0 e si entra nel primo ramo dell'if.
+La proposta C è errata come la B."
+*/
+
+//guarda il file scritto-2022-02-14-soluzione-c1.txt per le soluzioni "funzionanti"
