@@ -1,5 +1,6 @@
 void snsend(msg_t msg, pid_t dest) {
   asend((getpid(), msg), dest);
+  arecv(dest); // ACK
 }
 
 Map<pid_t, List<msg_t>> db;
@@ -35,6 +36,7 @@ msg_t snrecv(pid_t sender, int n) {
   msg_t | null ret; 
   while((ret = has(l, n)) != null) {
     (pid_t, msg_t) (p, m) = arecv(sender);
+    asend(ACK, p);
     unkeyed.add(m);
     get_or_init(p).add(m);
   }
