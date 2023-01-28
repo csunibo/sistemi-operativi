@@ -1,0 +1,45 @@
+//proposta dal prof alla correzione:
+
+semaphore mutex(1);
+semaphore ok2go(0);
+int n = 0;
+
+void wait4(void) {
+	mutex.P();
+	n ++;
+	if( n >= 4 ) {
+		n --;
+		ok2go.V();
+	} else {
+		mutex.V();
+		ok2go.P();
+		n --;
+		if( n > 0 )
+			okTogo.V();
+		else
+			mutex.V();
+	}
+}
+
+
+//mia proposta @LLibera
+
+semaphore mutex(1);
+semaphore s(0);
+int countProcess = 0;
+
+void wait4(void) {
+	mutex.P();
+	countProcess++;
+	if(countProcess < 4) {
+		mutex.V();
+		s.P();
+	} else {
+		for(int i = 1; i < 4; i++)
+			s.V()
+		countProcess = 0;
+		mutex.V();
+	}
+}
+
+

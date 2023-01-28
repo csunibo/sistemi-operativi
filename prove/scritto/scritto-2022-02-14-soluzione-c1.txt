@@ -20,11 +20,11 @@ monitor DataSemaphore {
 		if (value == 0) 
 			c.wait(); 
 		value--;
-		return s.pop(data);	// <-- aggiunta
+		return s.pop();	// <-- aggiunta
 	}
-	procedure entry void dV() { 
+	procedure entry void dV(datatype data) { 
 		value++;
-		s.push();		// <-- aggiunta
+		s.push(data);		// <-- aggiunta
 		c.signal();
 	} 
 	DataSemaphore(void) { 
