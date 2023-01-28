@@ -1,0 +1,79 @@
+process producer:
+	while True:
+		msg_t msg = produce_nevv_msg()
+		synmsg.send(&msg)
+
+process consumer:
+	while True:
+		msg_t msg;
+		synmsg.recv(&msg)
+		consume_msg(&msg)
+//dovevamo usare una copymsg(msg_t *src, msg_t *dest) per il messaggio
+
+
+//proposta dal prof alla correzione:
+
+monitor synmsg {
+	condition ok2send;
+	condition ok2recv;
+	int wp, wc;
+	msg_t *sendBuf, recvBuf;
+	synmsg() {
+		wp = 0;
+		wc = 0;
+	}
+	P.E. void send(msg_t *msg){
+		if (wc == 0) {
+			wp ++;
+			ok2send.wait()
+			wp --;
+			copymsg(msg, recvBuf);
+		} else {
+			sendBuf = msg;
+			ok2recv.signal()
+		}
+	}
+	P.E. void recv(msg_t *msg) {
+		if (wp == 0) {
+			wc ++;
+			ok2recv.wait()
+			wc --;
+			copymsg(sendBuf, msg);
+		} else {
+			recvBuf = msg;
+			ok2send.signal()
+		}
+	}
+}
+
+
+//proposta @LLibera
+monitor synmsg {
+	condition ok2send;
+	condition ok2recv;
+	condition unlock;
+	bool onemsg;
+	msg_t *src;
+	synmsg() {
+		onemsg = false;
+	}
+	procedure entry void send(msg_t *msg){
+		if (onemsg == true)
+			ok2send.wait()
+		onemsg = true;
+		src = msg;
+		ok2recv.signal()
+		unlock.wait(); /*il prof aveva detto che dovevamo aspettare a finire pk altrimenti
+				rischiavamo di sovrascrivere il msg prima di averlo copiato...*/
+	}
+	procedure entry void recv(msg_t *msg) {
+		if (onemsg == false)
+			ok2recv.wait();
+		onemsg = false;
+		copymsg(src, msg);
+		unlock.signal();
+		ok2send.signal();
+	}
+}
+
+
