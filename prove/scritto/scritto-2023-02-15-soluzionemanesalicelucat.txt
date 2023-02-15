@@ -1,0 +1,60 @@
+c1)
+
+monitor redblack {
+    int last = -1;
+    double sum[2]
+    int count[2]
+    condition ok2col[2]
+
+    double rb(int color, double value) {
+        if (color == last)
+            ok2col[color].wait()
+        last = color;
+        sum[color] += value;
+        count[color]++;
+        mean = sum[color] / count[color]
+        ok2col[1-color].signal()
+        return mean
+    }
+}
+
+c2)
+
+getall():
+    ssend(getpid(), (getpid(), TAG));
+    while true
+        (s,m) = arecv(ANY)
+        if (m == TAG && s = getpid())
+            break
+        db.add(s, m)
+
+void casend(pid_t dest, T msg):
+    asend(dest, (getpid(), msg))
+
+T carecv(pid_t sender):
+    get_all()
+    while ((m = db.get(sender)) == NULL) {
+        (s, m) = arecv(ANY)
+        db.add(s, m)
+    }
+    return m;
+
+int cacount(pid_t sender)
+    getall();
+    return db.count(sender)
+
+---------------------------------------------------------
+esercizio g1
+
+scheduler
+
+CPU 1 xx  xx  xx  xx  xx  xx  xx  xx  
+IO      --  --  --  --  --  --  --  --
+CPU 2   xx      xx      xx      xx
+IO        --      --      --      --
+CPU 3       xx      xx      xx      xx
+IO                    --              --
+      0 2 4 6 8 0 2 4 6 8 0 2 4 6 8 0 2 4 6 8
+
+a t=32 tutto si puo' ripetere come da t=0, quindi il periodo
+del processo tre dev'essere >=32. Il valore minimo e' 32.
