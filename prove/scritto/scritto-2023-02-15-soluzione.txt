@@ -1,3 +1,5 @@
+correzione del prof
+
 c1)
 
 monitor redblack {
@@ -44,7 +46,7 @@ int cacount(pid_t sender)
     return db.count(sender)
 
 ---------------------------------------------------------
-esercizio g1
+g1)
 
 scheduler
 
