@@ -33,6 +33,7 @@ void wait4(void) {
 	countProcess++;
 	if(countProcess < 4) {
 		mutex.V();
+-----------------------------------------------------//nota bene qui
 		s.P();
 	} else {
 		for(int i = 1; i < 4; i++)
@@ -41,5 +42,12 @@ void wait4(void) {
 		mutex.V();
 	}
 }
+//NOTA dal ricevimento: Questa soluzione NON usa correttamente il passaggio del testimone
+//supponi che il processo p1, p2, p3 'vadano a prendersi un caffè' nella riga denotata dal commento //nota bene qui, quindi non fanno ancora la s.P();
+//il processo p4 prende la mutex, incrementa countProcess, manda s.V() 3 volte, resetta countProcess a 0 e rilascia la mutex
+//p5 che ora può prendere la mutex (anche se si fosse bloccato prima) non prende un caffè nella riga denotata dal commento
+//quindi LA FIFO NON E' PIU' RISPETTATA!
+//la soluzione non può essere corretta se non eliminando la for e cambiando il codice 'profondamente' (almeno nel corpo del ramo else),
+//questo pk se dopo s.P(); venisse fatto qualcosa di diverso dal uscita di funzione ci sarebbe anche RACE CONDITION.
 
 
