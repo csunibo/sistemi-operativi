@@ -15,7 +15,7 @@ void wait4(void) {
 		ok2go.P();
 		n --;
 		if( n > 0 )
-			okTogo.V();
+			ok2go.V();
 		else
 			mutex.V();
 	}

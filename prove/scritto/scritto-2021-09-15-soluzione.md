@@ -53,6 +53,24 @@ T chained_recv(void) {
 }
 ```
 
+soluzione discussa con il prof surante il
+[ricevimento del 13 gennaio 2022](https://etherpad.wikimedia.org/p/so2223.cs.unibo.it) :
+
+```
+void chained_send (T msg, list_of_pids dests){
+  ssend(<msg, dests.tail()>, dests.first());
+  //first() restiuisce il primo della lista
+  //tail() restituisce la lista tranne il primo elemento
+  //(se la lista ha un solo elemento tail è vuoto)
+}
+
+T chained_recv(void){
+  <msg, dests> = sreceive(ANY);
+  if !dests.empty()
+    ssend(<msg, dests.tail()>, dests.first())
+ return msg
+}
+```
 
 ## Eserczio g.3
 1,2,3,4,1,2,5,1,2,3,4,5
