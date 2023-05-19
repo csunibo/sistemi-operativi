@@ -22,11 +22,14 @@ monitor redblack {
 
 c2)
 
+//la get prevede già la coppia venga eliminata se viene trovata (nella carecev)
+//(altrimenti andrebbe eliminata la coppia nella riga prima della return (dopo il corpo del while)
+
 getall():
-    ssend(getpid(), (getpid(), TAG));
-    while true
+    asend(getpid(), (getpid(), TAG));
+    while true :
         (s,m) = arecv(ANY)
-        if (m == TAG && s = getpid())
+        if (m == TAG && s == getpid())
             break
         db.add(s, m)
 
@@ -34,15 +37,15 @@ void casend(pid_t dest, T msg):
     asend(dest, (getpid(), msg))
 
 T carecv(pid_t sender):
-    get_all()
+    getall()
     while ((m = db.get(sender)) == NULL) {
         (s, m) = arecv(ANY)
         db.add(s, m)
     }
     return m;
 
-int cacount(pid_t sender)
-    getall();
+int cacount(pid_t sender):
+    getall()
     return db.count(sender)
 
 ---------------------------------------------------------
