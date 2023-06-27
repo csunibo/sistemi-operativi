@@ -33,10 +33,12 @@ int main(int argc, char *argv[])
 		perror( "Bad usage! u have to specify pipe name\n" );
 		return -1;
 	}
+
 	FILE *mypipe;
 	size_t buflen = 0;
 	char *buf = NULL;
 	size_t len;
+
 	// crea una named pipe (fifo) al path indicato come primo e unico argomento
 	// mkfifo(<pathname>, <permission>)
 	char *myname = argv[1];
@@ -57,7 +59,9 @@ int main(int argc, char *argv[])
 				return 0;
 			}
 		}
+
 		fclose(mypipe);
+
 	}
 	return 0;
 }
