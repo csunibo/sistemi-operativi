@@ -1,0 +1,45 @@
+//ricevimento 2023 07 05 (luglio)
+
+int npronti = 0
+condition tuttipronti;
+int gnumeri = [];
+condition ok2play[MAX]
+int nallabandiera
+int[2] punteggio;
+
+def nuovapartita():
+	punteggio[A]=0;
+	punteggio[B]=0;
+
+def chiama(squadra, numeri): //numeri è un vettore di interi
+	if (npronti < 2 * MAX) tuttipronti.wait()
+	gnumeri = numeri;
+	nallabandiera = 0
+	//tutti a casa! (se è finita la partita signal a tutti)
+	if max(punteggio) >= 10
+		for n in range(MAX):
+			ok2play[n].signal()
+			ok2play[n].signal()
+	else
+	//si gioca
+	for n in numeri:
+		ok2play[n].signal()
+		ok2play[n].signal()
+	return punteggio
+
+def pronto(squadra, numero):
+	npronti++;
+	if (npronti == 2 * MAX) tuttipronti.signal();
+	if (max(punteggio) >= 10) return 1; //esci se è finita la partita
+	//lascieranno la pronti solo gli studenti che vengono chiamati
+	if (not numero in gnumeri) //se non sono chiamata aspetto
+		ok2play[numero].wait;
+	npronti--;
+	return 0
+
+def allabandiera(squadra, numero):
+	//l'ultimo che arriva alla bandiera ha perso, fa sempre parte della squadra perdente
+	nallabandiera++
+	if (nallabandiera == 2 * len(gnumeri)
+		punteggio[1-squadra] ++ //l'altra squadra ha vinto
+

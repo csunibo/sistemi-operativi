@@ -1,0 +1,43 @@
+//ricevimento 2023 07 05 (luglio)
+//proposta da Simone e controllata dal prof
+
+monitor semtimeout() {
+	int init = 0; //nei positivi = value, nei negativi = quanti sono in attesa
+	List (Int, Condition) processes;
+	bool activatedByTimeout = false;
+	
+	public void entry V(void) {
+		init++;
+		processes.head().second.signal(); // secondo campo della testa di process --> la condizione
+		processes.remove(process);
+	}
+	
+	public boolean entry P(unsigned int timeout) {
+		init--;
+		if(init < 0) {
+			c = new condition()
+			processes.insert(timeout, c); //inserisce in coda
+			c.wait();
+		}
+		if(activatedByTimeout == true) {
+			init++;
+			activatedByTimeout = false;
+			return true;
+		}
+		else {
+			activatedByTimeout = false;
+			return false;
+		}
+	}
+	
+	public void entry tick(void) {
+		for(process : processes) {
+			process.first--;
+			if(process.first < 0) {
+				activatedByTimeout = true;
+				process.second.signal();
+				processes.remove(process); //ovunque sia nella struttura dati
+			}
+		}
+	}
+}

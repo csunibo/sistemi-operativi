@@ -1,0 +1,43 @@
+//ricevimento 2023 07 05 (luglio)
+//proposta da Elena e controllata dal prof
+
+Monitor conf{
+	Set nonPresenti = new Set(); //insieme di quelli non presenti
+	Queue <condition, string> relatori = new Queue();
+	condition ok2presentazione;
+
+	bool chiama(chiamato){
+		//se trova il chiamato nella coda relatori, restituisce la condition corrispondente
+		//sblocca il chiamato e aspetta finisca la presentazione
+		if(find(relatori, chiamato)){
+			c = find(relatori, chiamato).second;
+			c.signal();
+			ok2presentazione.wait();
+			return true;
+			// sennò inserisce il chiamato tra i non presenti e restituisce false
+		} else {
+			nonPresenti.insert(chiamato);
+			return false;
+		}
+	}
+
+	bool arrivato(nome){
+		//se il nome è tra i chiamati e non presenti restituisce false
+		//sennò aspetta di essere chiamato
+		if(found(nonPresenti, nome)){
+			nonPresenti.delete(nome);
+			return false;
+		} else {
+			c = new condition;
+			relatori.enqueue(c, nome);
+			c.wait();
+		}
+	}
+
+	void finepresentazione(nome){
+		//rimuove dalla lista dei relatori quello che ha finito e segnala la fine della presentazione
+		relatori.dequeue(nome);
+		ok2presentazione.signal();
+	}
+}
+

@@ -1,0 +1,38 @@
+//ricevimento 2023 07 05 (luglio)
+//proposta da Libera e controllata dal prof
+
+//questa proposta era già su wiki a questo link:
+// https://so.v2.cs.unibo.it/wiki/index.php/Prove_scritte_2017#Esercizio_c.2_.28da_controllare.29_2
+
+//il messaggio mandato è la tripla <destinatario, mittente, messaggio>
+
+asend(pid_t dst, msg_type msg){
+	bsend (<dst, getpid(), msg>);
+}
+
+myDictionaryQueue of <pid_t, msg_type> db; //nota: salvo qui solo se il messaggio è per me, quindi dest non mi serve
+
+arecv(pid_t sender) {
+
+	//devo controllare se nella db ho già ricevuto il messaggio da quel mittente, ovvero mentre aspettavo un messaggio da qualcun'altro
+	//db.get(sender) cerca una coppia il cui mittente è sender
+	//se trova il messaggio lo rimuove anche dal db.
+	//db.get(ANY) ritorna (ed elimina da db) il primo che trova (FIFO), e if(db.isEmpty()) return NULL;
+
+	if( ( <mit, msg> = db.get(sender) ) != NULL ) //se lo trova
+		return msg;
+
+	do {
+		<dst, mit, msg> = brecv(*);				//ricevo
+		if( dst == getpid() ) {					//il messaggio è per me?
+			if ( mit == sender || sender == ANY )		//se devo ritornare il messaggio
+				return msg;     //esci dal while
+
+			//se devo salvarlo (sender specificato e messaggio per me)
+			//metto in db i messaggi di altri mittenti, ricevuti quando ne aspettavo uno da un mittente specificato
+
+			db.add(<mit, msg>);
+		}
+		//se il messaggio non era per me non devo farci niente, quindi lo butto via!
+	} while ( true ) //devo uscire solo con il return
+}
