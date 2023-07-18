@@ -1,0 +1,48 @@
+//ricevimento 2023 07 05 (luglio)
+
+Monitor giav{
+condition ok2tiro[NATLETI] ok2lanciato;
+int conta[NATLETI] = {0,…,0}
+int next = 0
+bool lanciok;
+int count = 0;
+
+boolean pronto(i){
+	if(conta[i]<=3){
+		if (next != i)
+			ok2tiro.wait();
+		return true;
+	} else {
+		return false;
+	}
+	lanciok=false
+}
+
+void lanciato(i){
+	lanciok=true;
+	ok2lanciato.signal();
+	conta[i]++;
+}
+
+int lanciofatto(){
+	if (not lanciok)
+		ok2lanciato.wait();
+	current = next;
+	next = (next + 1) % NATLETI;
+	count++;
+	if (count >= 3 * NATLETI)
+		return -1;
+	else
+		return current;
+}
+
+void registraechiama(i, m){
+	ranking.add(i,m);
+	ok2tiro[next].signal();
+}
+
+Queue classifica(){
+	//ordina in modo decrescente la classifica in base al secondo parametro (la misura)
+	c = ranking.orderByM(class);
+	return c;
+}

@@ -1,0 +1,64 @@
+//ricevimento 2023 07 05 (luglio)
+
+foo(a,b,c): <if (random(0,1)) {a=b; b=c} else {c=b; b=a}>
+
+x = 0
+foo (x,y,x)
+setto x al valore precedente di y
+y=x? abbiamo fatto un assegnamento atomico in un mondo in cui non lo è
+
+x=y=1
+foo(x,g,y)
+se g = 1 x e y = 1
+se g = 0 allora uno delle due (x o y) = 0 l'altro rimane 1 e g diventa 1
+
+x=y=0
+foo(x,g,y) allora g=0
+
+mutexin:
+    while True:
+        x=y=1;
+        foo(x,g,y)
+        if (x == 0 || y == 0) break;
+
+mutexout
+     x=y=0
+     foo(x,g,y)
+
+-------------------
+bar(a,b): <x=a & 1; a = (a >> 1) | b << 31; b = x>
+
+ bar(a,b) è un registro di scorrimento infatti
+hmmmmmmmmmmmmmml
+restituisce l
+bhmmmmmmmmmmmmmm
+
+0 sarebbe via libera, != 0 sarebbe continua a ciclare
+a come globale b come locale
+v=0
+bar (g, v)
+v=1
+for i in range(31): bar(g, v)
+
+mutexin:
+    do
+       v=1
+       bar(g,v)
+    while v != 0
+    
+mutexout:
+    v=0
+    bar(g,v)
+
+11111110
+entra
+11111111 v=0
+entra
+11111111 v=1
+esce
+01111111 v=1
+
+quello che voleva entrare
+10111111 v =1
+11011111 v=1
+continua a ciclare finchè non fa v=0
