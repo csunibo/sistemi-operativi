@@ -1,0 +1,60 @@
+c1)
+
+monitor choicesem {
+	queue of condition c
+	int value
+	
+	void P(void) {
+		if (value == 0) {
+			c = new condition()
+			q.append(c)
+			c.wait()
+			free(c)
+		} else {
+			value--
+		}	
+	}
+	
+	void V(int n){
+		if (q.isEmpty()){
+			value++
+		} else {
+			if (q.len() > n) {
+				c = q.get(n+1)
+			} else {
+				c = q.get(1)
+			}
+			c.signal()
+		}
+	}
+}
+
+c2)
+/*IDEA: mando messaggi di lunghezza inferiore per etichettare la fine di un messaggio*/
+
+void asend (msg_t *msg, pid_t dest):
+	while msg.len >= 251_
+		lasend(<getpid(), 251, msg[:251]>, dest)
+		msg = msg[251:]
+	lasend(<getpid(), msg.len(), msg)
+	
+msg_t arecv(pid_t sender)
+	while True:
+		<pid, len, msg> = larecv(sender)
+		if len == 251:
+			msgfrom[pid] = msgfrom[pid] + msg
+		else:
+			m = msgfrom[pid] + msg
+			msgfrom[pid] = None
+		return m
+		
+	
+	
+g1)
+
+P1: cpu 3, I/O 3, cpu 5, I/O 3, cpu 1, I/O 3, cpu 1
+P2: cpu 3, I/O 2, cpu 1
+P3: cpu 2, I/O 3, cpu 5, I/O 3, cpu 1
+
+CPU scheduler priorità statica p1, p3, p2
+I/= scheduler FIFO
